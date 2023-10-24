@@ -1,22 +1,24 @@
 import typescript from 'rollup-plugin-typescript2';
+import cjs from '@rollup/plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
 import dts from 'rollup-plugin-dts';
 
 const config = [
   {
     input: 'src/index.tsx',
     output: {
-      file: 'build/esm/index.jsx',
+      file: 'build/esm/index.js',
       format: 'es',
     },
-    plugins: [typescript()],
+    plugins: [typescript(), resolve(), cjs()],
   },
   {
     input: 'src/index.tsx',
     output: {
-      file: 'build/cjs/index.jsx',
+      file: 'build/cjs/index.js',
       format: 'cjs',
     },
-    plugins: [typescript()],
+    plugins: [typescript(), resolve(), cjs()],
   },
   {
     input: 'src/index.tsx',
