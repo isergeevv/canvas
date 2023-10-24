@@ -11,6 +11,7 @@ const config = [
       format: 'es',
     },
     plugins: [typescript(), resolve(), cjs()],
+    external: ['react'],
   },
   {
     input: 'src/index.tsx',
@@ -19,6 +20,7 @@ const config = [
       format: 'cjs',
     },
     plugins: [typescript(), resolve(), cjs()],
+    external: ['react'],
   },
   {
     input: 'src/index.tsx',
