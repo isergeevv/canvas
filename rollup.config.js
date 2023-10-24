@@ -21,7 +21,7 @@ const config = [
   {
     input: 'src/index.tsx',
     output: {
-      file: 'build/types/index.d.tsx',
+      file: 'build/types/index.d.ts',
       format: 'es',
     },
     plugins: [dts()],

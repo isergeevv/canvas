@@ -1,6 +1,7 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
+import { CanvasHTMLAttributes } from 'react';
 
-type Props = {
+type Props = CanvasHTMLAttributes<HTMLCanvasElement> & {
     fill?: boolean;
     draw: (ctx: CanvasRenderingContext2D, timestamp: number) => void;
 };

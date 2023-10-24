@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { CanvasHTMLAttributes, useEffect, useRef, useState } from 'react';
 
-type Props = {
+type Props = CanvasHTMLAttributes<HTMLCanvasElement> & {
   fill?: boolean;
   draw: (ctx: CanvasRenderingContext2D, timestamp: number) => void;
 };
