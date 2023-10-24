@@ -1,6 +1,4 @@
 import typescript from 'rollup-plugin-typescript2';
-import resolve from '@rollup/plugin-node-resolve';
-import cjs from '@rollup/plugin-commonjs';
 import dts from 'rollup-plugin-dts';
 
 const config = [
@@ -10,7 +8,7 @@ const config = [
       file: 'build/esm/index.jsx',
       format: 'es',
     },
-    plugins: [typescript(), resolve(), cjs()],
+    plugins: [typescript()],
   },
   {
     input: 'src/index.tsx',
@@ -18,7 +16,7 @@ const config = [
       file: 'build/cjs/index.jsx',
       format: 'cjs',
     },
-    plugins: [typescript(), resolve(), cjs()],
+    plugins: [typescript()],
   },
   {
     input: 'src/index.tsx',
