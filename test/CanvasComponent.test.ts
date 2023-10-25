@@ -2,9 +2,10 @@ import CanvasComponent from '../src/core/CanvasComponent';
 
 describe('CanvasComponent', () => {
   it('construct', () => {
-    const component = CanvasComponent({
-      draw: () => {},
-    });
+    class Component extends CanvasComponent {
+      draw = () => {};
+    }
+    const component = new Component();
 
     expect(component.id).toBe('');
   });

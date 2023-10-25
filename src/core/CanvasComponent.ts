@@ -1,38 +1,43 @@
 import CanvasComponentInterface from '../interface/CanvasComponentInterface';
-import { CanvasComponentDrawProps, CanvasComponentEvent, CanvasComponentProps } from '../types';
+import {
+  CanvasComponentDrawProps,
+  CanvasComponentEvent,
+  CanvasComponentInitProps,
+  CanvasComponentSceneChangeProps,
+} from '../types';
 
-const CanvasComponent = ({ id, events, init, draw, sceneChange }: CanvasComponentProps) => {
-  let _id: string = id || '';
-  let _events: Record<string, CanvasComponentEvent> = events || {};
-  let _children: CanvasComponentInterface[] = [];
+export default abstract class CanvasComponent implements CanvasComponentInterface {
+  private _id: string;
+  private _events: Record<string, CanvasComponentEvent>;
+  private _children: CanvasComponentInterface[];
 
-  return <CanvasComponentInterface>{
-    get events() {
-      return _events;
-    },
-    get children() {
-      return _children;
-    },
-    get id() {
-      return _id;
-    },
+  constructor(id = '') {
+    this._events = {};
+    this._children = [];
+    this._id = id;
+  }
 
-    drawFrame: (props: CanvasComponentDrawProps) => {
-      draw(props);
+  get events() {
+    return this._events;
+  }
+  get children() {
+    return this._children;
+  }
+  get id() {
+    return this._id;
+  }
 
-      for (const child of _children) {
-        child.draw(props);
-      }
-    },
+  drawFrame = (props: CanvasComponentDrawProps) => {
+    this.draw(props);
 
-    addChild: (...components: CanvasComponentInterface[]) => {
-      _children.push(...components);
-    },
-
-    init: init,
-    draw: draw,
-    sceneChange: sceneChange,
+    for (const child of this.children) {
+      child.draw(props);
+    }
   };
-};
 
-export default CanvasComponent;
+  addChild = (...components: CanvasComponent[]) => {
+    this.children.push(...components);
+  };
+
+  abstract draw(props: CanvasComponentDrawProps): boolean | void;
+}

@@ -36,7 +36,11 @@ interface CanvasComponentInterface {
     id: string;
     drawFrame: (props: CanvasComponentDrawProps) => void;
     draw: (props: CanvasComponentDrawProps) => void;
+}
+interface CanvasComponentInterface {
     init?: (props: CanvasComponentInitProps) => void;
+}
+interface CanvasComponentInterface {
     sceneChange?: (props: CanvasComponentSceneChangeProps) => void;
 }
 
@@ -59,6 +63,17 @@ declare const CANVAS_EVENTS: {
     POINTER_UP: string;
 };
 
-declare const CanvasComponent: ({ id, events, init, draw, sceneChange }: CanvasComponentProps) => CanvasComponentInterface;
+declare abstract class CanvasComponent implements CanvasComponentInterface {
+    private _id;
+    private _events;
+    private _children;
+    constructor(id?: string);
+    get events(): Record<string, CanvasComponentEvent>;
+    get children(): CanvasComponentInterface[];
+    get id(): string;
+    drawFrame: (props: CanvasComponentDrawProps) => void;
+    addChild: (...components: CanvasComponent[]) => void;
+    abstract draw(props: CanvasComponentDrawProps): boolean | void;
+}
 
 export { CANVAS_EVENTS, CanvasComponent, CanvasComponentDrawProps, CanvasComponentEvent, CanvasComponentInitProps, CanvasComponentInterface, CanvasComponentProps, CanvasComponentSceneChangeProps, CanvasScene, CanvasSceneController, _default as default };

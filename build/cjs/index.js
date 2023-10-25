@@ -1462,34 +1462,34 @@ var Canvas = ({ fill, scenes, ...props }) => {
     return jsxRuntimeExports.jsx("canvas", { ref: canvasRef, ...props });
 };
 
-const CanvasComponent = ({ id, events, init, draw, sceneChange }) => {
-    let _id = id || '';
-    let _events = events || {};
-    let _children = [];
-    return {
-        get events() {
-            return _events;
-        },
-        get children() {
-            return _children;
-        },
-        get id() {
-            return _id;
-        },
-        drawFrame: (props) => {
-            draw(props);
-            for (const child of _children) {
-                child.draw(props);
-            }
-        },
-        addChild: (...components) => {
-            _children.push(...components);
-        },
-        init: init,
-        draw: draw,
-        sceneChange: sceneChange,
+class CanvasComponent {
+    _id;
+    _events;
+    _children;
+    constructor(id = '') {
+        this._events = {};
+        this._children = [];
+        this._id = id;
+    }
+    get events() {
+        return this._events;
+    }
+    get children() {
+        return this._children;
+    }
+    get id() {
+        return this._id;
+    }
+    drawFrame = (props) => {
+        this.draw(props);
+        for (const child of this.children) {
+            child.draw(props);
+        }
     };
-};
+    addChild = (...components) => {
+        this.children.push(...components);
+    };
+}
 
 class CanvasScene {
     _components;
