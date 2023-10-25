@@ -10,10 +10,16 @@ declare class CanvasSceneController {
     setScene: (newSceneName: string) => void;
 }
 
-interface DrawProps {
+interface CanvasComponentDrawProps {
     ctx: CanvasRenderingContext2D;
     timestamp: number;
     sceneController: CanvasSceneController;
+}
+interface CanvasComponentInitProps {
+}
+interface CanvasComponentSceneChangeProps {
+    currentScene: string;
+    nextScene: string;
 }
 type CanvasComponentEvent = (e: Event) => boolean | void;
 
@@ -25,9 +31,11 @@ declare abstract class CanvasComponent {
     get events(): Map<string, CanvasComponentEvent>;
     get children(): CanvasComponent[];
     get id(): string;
-    drawFrame: (props: DrawProps) => void;
+    drawFrame: (props: CanvasComponentDrawProps) => void;
     addChild: (...components: CanvasComponent[]) => void;
-    abstract draw(props: DrawProps): boolean | void;
+    abstract init(props: CanvasComponentInitProps): boolean | void;
+    abstract sceneChange(props: CanvasComponentSceneChangeProps): boolean | void;
+    abstract draw(props: CanvasComponentDrawProps): boolean | void;
 }
 
 declare class CanvasScene {
@@ -49,4 +57,4 @@ declare const CANVAS_EVENTS: {
     POINTER_UP: string;
 };
 
-export { CANVAS_EVENTS, CanvasComponent, CanvasComponentEvent, CanvasScene, CanvasSceneController, DrawProps, _default as default };
+export { CANVAS_EVENTS, CanvasComponent, CanvasComponentDrawProps, CanvasComponentEvent, CanvasComponentInitProps, CanvasComponentSceneChangeProps, CanvasScene, CanvasSceneController, _default as default };

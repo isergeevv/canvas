@@ -22,6 +22,14 @@ export default class CanvasSceneController {
       console.error(`[CanvasSceneController] Scene ${newSceneName} was not found.`);
       return;
     }
+
+    for (const component of this._scenes[this._currentSceneNameRef.current].components) {
+      component.sceneChange({
+        currentScene: this._currentSceneNameRef.current,
+        nextScene: newSceneName,
+      });
+    }
+
     this._currentSceneNameRef.current = newSceneName;
   };
 }

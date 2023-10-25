@@ -1,5 +1,9 @@
-import { CanvasComponentEvent } from '../types';
-import { DrawProps } from '../types';
+import {
+  CanvasComponentDrawProps,
+  CanvasComponentEvent,
+  CanvasComponentInitProps,
+  CanvasComponentSceneChangeProps,
+} from '../types';
 
 export default abstract class CanvasComponent {
   private _id: string;
@@ -22,7 +26,7 @@ export default abstract class CanvasComponent {
     return this._id;
   }
 
-  drawFrame = (props: DrawProps) => {
+  drawFrame = (props: CanvasComponentDrawProps) => {
     this.draw(props);
 
     for (const child of this.children) {
@@ -34,5 +38,9 @@ export default abstract class CanvasComponent {
     this.children.push(...components);
   };
 
-  abstract draw(props: DrawProps): boolean | void;
+  abstract init(props: CanvasComponentInitProps): boolean | void;
+
+  abstract sceneChange(props: CanvasComponentSceneChangeProps): boolean | void;
+
+  abstract draw(props: CanvasComponentDrawProps): boolean | void;
 }

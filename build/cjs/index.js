@@ -1376,6 +1376,12 @@ class CanvasSceneController {
             console.error(`[CanvasSceneController] Scene ${newSceneName} was not found.`);
             return;
         }
+        for (const component of this._scenes[this._currentSceneNameRef.current].components) {
+            component.sceneChange({
+                currentScene: this._currentSceneNameRef.current,
+                nextScene: newSceneName,
+            });
+        }
         this._currentSceneNameRef.current = newSceneName;
     };
 }
@@ -1397,6 +1403,11 @@ var Canvas = ({ fill, scenes, ...props }) => {
         if (!ctx) {
             setCtx(canvasRef.current.getContext('2d'));
             return;
+        }
+        for (const scene of Object.values(scenes)) {
+            for (const component of scene.components) {
+                component.init({ ctx });
+            }
         }
         const onWindowResize = () => {
             if (fill) {

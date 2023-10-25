@@ -24,6 +24,12 @@ export default ({ fill, scenes, ...props }: Props) => {
       return;
     }
 
+    for (const scene of Object.values(scenes)) {
+      for (const component of scene.components) {
+        component.init({ ctx });
+      }
+    }
+
     const onWindowResize = () => {
       if (fill) {
         canvasRef.current.width = window.innerWidth;
