@@ -26,7 +26,7 @@ export default ({ fill, scenes, ...props }: Props) => {
 
     for (const scene of Object.values(scenes)) {
       for (const component of scene.components) {
-        component.init({ ctx });
+        component.init && component.init({ ctx });
       }
     }
 

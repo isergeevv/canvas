@@ -1377,10 +1377,11 @@ class CanvasSceneController {
             return;
         }
         for (const component of this._scenes[this._currentSceneNameRef.current].components) {
-            component.sceneChange({
-                currentScene: this._currentSceneNameRef.current,
-                nextScene: newSceneName,
-            });
+            component.sceneChange &&
+                component.sceneChange({
+                    currentScene: this._currentSceneNameRef.current,
+                    nextScene: newSceneName,
+                });
         }
         this._currentSceneNameRef.current = newSceneName;
     };
@@ -1406,7 +1407,7 @@ var Canvas = ({ fill, scenes, ...props }) => {
         }
         for (const scene of Object.values(scenes)) {
             for (const component of scene.components) {
-                component.init({ ctx });
+                component.init && component.init({ ctx });
             }
         }
         const onWindowResize = () => {
