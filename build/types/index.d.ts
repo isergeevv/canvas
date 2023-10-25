@@ -22,27 +22,29 @@ interface CanvasComponentSceneChangeProps {
     nextScene: string;
 }
 type CanvasComponentEvent = (e: Event) => boolean | void;
+interface CanvasComponentProps {
+    draw: (props: CanvasComponentDrawProps) => boolean | void;
+    id?: string;
+    events?: Record<string, CanvasComponentEvent>;
+    init?: (props: CanvasComponentInitProps) => void;
+    sceneChange?: (props: CanvasComponentSceneChangeProps) => void;
+}
 
-declare abstract class CanvasComponent {
-    private _id;
-    private _events;
-    private _children;
-    constructor(id?: string);
-    get events(): Map<string, CanvasComponentEvent>;
-    get children(): CanvasComponent[];
-    get id(): string;
+interface CanvasComponentInterface {
+    events: Record<string, CanvasComponentEvent>;
+    children: CanvasComponentInterface[];
+    id: string;
     drawFrame: (props: CanvasComponentDrawProps) => void;
-    addChild: (...components: CanvasComponent[]) => void;
-    abstract init(props: CanvasComponentInitProps): boolean | void;
-    abstract sceneChange(props: CanvasComponentSceneChangeProps): boolean | void;
-    abstract draw(props: CanvasComponentDrawProps): boolean | void;
+    draw: (props: CanvasComponentDrawProps) => void;
+    init?: (props: CanvasComponentInitProps) => void;
+    sceneChange?: (props: CanvasComponentSceneChangeProps) => void;
 }
 
 declare class CanvasScene {
     private _components;
-    constructor(components: CanvasComponent[]);
-    get components(): CanvasComponent[];
-    getComponent: (id: string) => CanvasComponent;
+    constructor(components: CanvasComponentInterface[]);
+    get components(): CanvasComponentInterface[];
+    getComponent: (id: string) => CanvasComponentInterface;
 }
 
 type Props = CanvasHTMLAttributes<HTMLCanvasElement> & {
@@ -57,4 +59,6 @@ declare const CANVAS_EVENTS: {
     POINTER_UP: string;
 };
 
-export { CANVAS_EVENTS, CanvasComponent, CanvasComponentDrawProps, CanvasComponentEvent, CanvasComponentInitProps, CanvasComponentSceneChangeProps, CanvasScene, CanvasSceneController, _default as default };
+declare const CanvasComponent: ({ id, events, init, draw, sceneChange }: CanvasComponentProps) => CanvasComponentInterface;
+
+export { CANVAS_EVENTS, CanvasComponent, CanvasComponentDrawProps, CanvasComponentEvent, CanvasComponentInitProps, CanvasComponentInterface, CanvasComponentProps, CanvasComponentSceneChangeProps, CanvasScene, CanvasSceneController, _default as default };

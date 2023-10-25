@@ -1,46 +1,38 @@
-import {
-  CanvasComponentDrawProps,
-  CanvasComponentEvent,
-  CanvasComponentInitProps,
-  CanvasComponentSceneChangeProps,
-} from '../types';
+import CanvasComponentInterface from '../interface/CanvasComponentInterface';
+import { CanvasComponentDrawProps, CanvasComponentEvent, CanvasComponentProps } from '../types';
 
-export default abstract class CanvasComponent {
-  private _id: string;
-  private _events: Map<string, CanvasComponentEvent>;
-  private _children: CanvasComponent[];
+const CanvasComponent = ({ id, events, init, draw, sceneChange }: CanvasComponentProps) => {
+  let _id: string = id || '';
+  let _events: Record<string, CanvasComponentEvent> = events || {};
+  let _children: CanvasComponentInterface[] = [];
 
-  constructor(id = '') {
-    this._events = new Map<string, CanvasComponentEvent>();
-    this._children = [];
-    this._id = id;
-  }
+  return <CanvasComponentInterface>{
+    get events() {
+      return _events;
+    },
+    get children() {
+      return _children;
+    },
+    get id() {
+      return _id;
+    },
 
-  get events() {
-    return this._events;
-  }
-  get children() {
-    return this._children;
-  }
-  get id() {
-    return this._id;
-  }
+    drawFrame: (props: CanvasComponentDrawProps) => {
+      draw(props);
 
-  drawFrame = (props: CanvasComponentDrawProps) => {
-    this.draw(props);
+      for (const child of _children) {
+        child.draw(props);
+      }
+    },
 
-    for (const child of this.children) {
-      child.draw(props);
-    }
+    addChild: (...components: CanvasComponentInterface[]) => {
+      _children.push(...components);
+    },
+
+    init: init,
+    draw: draw,
+    sceneChange: sceneChange,
   };
+};
 
-  addChild = (...components: CanvasComponent[]) => {
-    this.children.push(...components);
-  };
-
-  abstract init(props: CanvasComponentInitProps): boolean | void;
-
-  abstract sceneChange(props: CanvasComponentSceneChangeProps): boolean | void;
-
-  abstract draw(props: CanvasComponentDrawProps): boolean | void;
-}
+export default CanvasComponent;

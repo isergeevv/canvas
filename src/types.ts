@@ -14,3 +14,11 @@ export interface CanvasComponentSceneChangeProps {
 }
 
 export type CanvasComponentEvent = (e: Event) => boolean | void;
+
+export interface CanvasComponentProps {
+  draw: (props: CanvasComponentDrawProps) => boolean | void;
+  id?: string;
+  events?: Record<string, CanvasComponentEvent>;
+  init?: (props: CanvasComponentInitProps) => void;
+  sceneChange?: (props: CanvasComponentSceneChangeProps) => void;
+}

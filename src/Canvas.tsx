@@ -1,8 +1,8 @@
 import { CanvasHTMLAttributes, useEffect, useRef, useState } from 'react';
-import CanvasComponent from './core/CanvasComponent';
 import CanvasScene from './core/CanvasScene';
 import CanvasSceneController from './controllers/CanvasSceneController';
 import { CANVAS_EVENTS } from './const';
+import CanvasComponentInterface from './interface/CanvasComponentInterface';
 
 type Props = CanvasHTMLAttributes<HTMLCanvasElement> & {
   fill: boolean;
@@ -46,8 +46,8 @@ export default ({ fill, scenes, ...props }: Props) => {
       requestFrameId = window.requestAnimationFrame(drawFrame);
     };
 
-    const execComponentEvent = (event: string, e: Event, component: CanvasComponent) => {
-      const listener = component.events.get(event);
+    const execComponentEvent = (event: string, e: Event, component: CanvasComponentInterface) => {
+      const listener = component.events[event];
       if (listener) {
         const stop = listener(e) ?? false;
         if (stop) return true;

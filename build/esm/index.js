@@ -1419,7 +1419,7 @@ var Canvas = ({ fill, scenes, ...props }) => {
             requestFrameId = window.requestAnimationFrame(drawFrame);
         };
         const execComponentEvent = (event, e, component) => {
-            const listener = component.events.get(event);
+            const listener = component.events[event];
             if (listener) {
                 const stop = listener(e) ?? false;
                 if (stop)
@@ -1458,34 +1458,34 @@ var Canvas = ({ fill, scenes, ...props }) => {
     return jsxRuntimeExports.jsx("canvas", { ref: canvasRef, ...props });
 };
 
-class CanvasComponent {
-    _id;
-    _events;
-    _children;
-    constructor(id = '') {
-        this._events = new Map();
-        this._children = [];
-        this._id = id;
-    }
-    get events() {
-        return this._events;
-    }
-    get children() {
-        return this._children;
-    }
-    get id() {
-        return this._id;
-    }
-    drawFrame = (props) => {
-        this.draw(props);
-        for (const child of this.children) {
-            child.draw(props);
-        }
+const CanvasComponent = ({ id, events, init, draw, sceneChange }) => {
+    let _id = id || '';
+    let _events = events || {};
+    let _children = [];
+    return {
+        get events() {
+            return _events;
+        },
+        get children() {
+            return _children;
+        },
+        get id() {
+            return _id;
+        },
+        drawFrame: (props) => {
+            draw(props);
+            for (const child of _children) {
+                child.draw(props);
+            }
+        },
+        addChild: (...components) => {
+            _children.push(...components);
+        },
+        init: init,
+        draw: draw,
+        sceneChange: sceneChange,
     };
-    addChild = (...components) => {
-        this.children.push(...components);
-    };
-}
+};
 
 class CanvasScene {
     _components;
