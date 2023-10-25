@@ -5,7 +5,7 @@ import dts from 'rollup-plugin-dts';
 
 const config = [
   {
-    input: 'src/index.tsx',
+    input: 'src/index.ts',
     output: {
       file: 'build/esm/index.js',
       format: 'es',
@@ -14,7 +14,7 @@ const config = [
     external: ['react'],
   },
   {
-    input: 'src/index.tsx',
+    input: 'src/index.ts',
     output: {
       file: 'build/cjs/index.js',
       format: 'cjs',
@@ -23,7 +23,7 @@ const config = [
     external: ['react'],
   },
   {
-    input: 'src/index.tsx',
+    input: 'src/index.ts',
     output: {
       file: 'build/types/index.d.ts',
       format: 'es',

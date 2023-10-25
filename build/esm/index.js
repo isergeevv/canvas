@@ -1354,9 +1354,40 @@ if (process.env.NODE_ENV === 'production') {
 
 var jsxRuntimeExports = jsxRuntime.exports;
 
-var index = ({ fill, draw, ...props }) => {
+class CanvasSceneController {
+    _scenes;
+    _currentSceneNameRef;
+    constructor(scenes, currentSceneNameRef) {
+        this._scenes = scenes;
+        this._currentSceneNameRef = currentSceneNameRef;
+    }
+    get currentSceneName() {
+        return this._currentSceneNameRef.current;
+    }
+    get currentScene() {
+        return this._scenes[this._currentSceneNameRef.current];
+    }
+    setScene = (newSceneName) => {
+        if (!Object.keys(this._scenes).includes(newSceneName)) {
+            console.error(`[CanvasSceneController] Scene ${newSceneName} was not found.`);
+            return;
+        }
+        this._currentSceneNameRef.current = newSceneName;
+    };
+}
+
+const CANVAS_EVENTS = {
+    POINTER_DOWN: 'pointerdown',
+    POINTER_MOVE: 'pointermove',
+    POINTER_UP: 'pointerup',
+};
+
+var Canvas = ({ fill, scenes, ...props }) => {
     const [ctx, setCtx] = useState();
     const canvasRef = useRef();
+    const eventListeners = useRef({});
+    const sceneNameRef = useRef(Object.keys(scenes)[0]);
+    const sceneController = new CanvasSceneController(scenes, sceneNameRef);
     useEffect(() => {
         let requestFrameId = 0;
         if (!ctx) {
@@ -1364,25 +1395,98 @@ var index = ({ fill, draw, ...props }) => {
             return;
         }
         const onWindowResize = () => {
-            canvasRef.current.width = window.innerWidth;
-            canvasRef.current.height = window.innerHeight;
+            if (fill) {
+                canvasRef.current.width = window.innerWidth;
+                canvasRef.current.height = window.innerHeight;
+            }
         };
-        const onNextFrame = (timestamp) => {
-            draw(ctx, timestamp);
-            requestFrameId = window.requestAnimationFrame(onNextFrame);
+        const drawFrame = (timestamp) => {
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            for (const component of scenes[sceneNameRef.current].components) {
+                component.drawFrame({ ctx, timestamp, sceneController });
+            }
+            requestFrameId = window.requestAnimationFrame(drawFrame);
+        };
+        const execComponentEvent = (event, e, component) => {
+            const listener = component.events.get(event);
+            if (listener) {
+                const stop = listener(e) ?? false;
+                if (stop)
+                    return true;
+            }
+            for (const childComponent of component.children) {
+                const stop = execComponentEvent(event, e, childComponent);
+                if (stop)
+                    return true;
+            }
         };
         if (fill) {
-            onWindowResize();
-            window.addEventListener('resize', onWindowResize);
+            canvasRef.current.width = window.innerWidth;
+            canvasRef.current.height = window.innerHeight;
         }
-        requestFrameId = window.requestAnimationFrame(onNextFrame);
+        for (const event of Object.values(CANVAS_EVENTS)) {
+            eventListeners[event] = (e) => {
+                for (const component of scenes[sceneNameRef.current].components) {
+                    const stop = execComponentEvent(event, e, component);
+                    if (stop)
+                        break;
+                }
+            };
+            canvasRef.current.addEventListener(event, eventListeners[event]);
+        }
+        window.addEventListener('resize', onWindowResize);
+        requestFrameId = window.requestAnimationFrame(drawFrame);
         return () => {
-            if (fill)
-                window.removeEventListener('resize', onWindowResize);
+            window.removeEventListener('resize', onWindowResize);
             window.cancelAnimationFrame(requestFrameId);
+            for (const event of Object.values(CANVAS_EVENTS)) {
+                canvasRef.current.removeEventListener(event, eventListeners[event]);
+            }
         };
     }, [ctx]);
     return jsxRuntimeExports.jsx("canvas", { ref: canvasRef, ...props });
 };
 
-export { index as default };
+class CanvasComponent {
+    _id;
+    _events;
+    _children;
+    constructor(id = '') {
+        this._events = new Map();
+        this._children = [];
+        this._id = id;
+    }
+    get events() {
+        return this._events;
+    }
+    get children() {
+        return this._children;
+    }
+    get id() {
+        return this._id;
+    }
+    drawFrame = (props) => {
+        this.draw(props);
+        for (const child of this.children) {
+            child.draw(props);
+        }
+    };
+    addChild = (...components) => {
+        this.children.push(...components);
+    };
+}
+
+class CanvasScene {
+    _components;
+    constructor(components) {
+        this._components = components;
+    }
+    get components() {
+        return this._components;
+    }
+    getComponent = (id) => {
+        return this._components.find((c) => c.id === id) || null;
+    };
+}
+
+export { CANVAS_EVENTS, CanvasComponent, CanvasScene, CanvasSceneController, Canvas as default };
