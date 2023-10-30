@@ -1356,30 +1356,29 @@ var jsxRuntimeExports = jsxRuntime.exports;
 
 class CanvasSceneController {
     _scenes;
-    _currentSceneNameRef;
-    constructor(scenes, currentSceneNameRef) {
+    _currentSceneName;
+    constructor(scenes, currentSceneName) {
         this._scenes = scenes;
-        this._currentSceneNameRef = currentSceneNameRef;
+        this._currentSceneName = currentSceneName;
     }
     get currentSceneName() {
-        return this._currentSceneNameRef.current;
+        return this._currentSceneName;
     }
     get currentScene() {
-        return this._scenes[this._currentSceneNameRef.current];
+        return this._scenes[this._currentSceneName];
+    }
+    get scenes() {
+        return this._scenes;
     }
     setScene = (newSceneName) => {
         if (!Object.keys(this._scenes).includes(newSceneName)) {
             console.error(`[CanvasSceneController] Scene ${newSceneName} was not found.`);
             return;
         }
-        for (const component of this._scenes[this._currentSceneNameRef.current].components) {
-            component.sceneChange &&
-                component.sceneChange({
-                    currentScene: this._currentSceneNameRef.current,
-                    nextScene: newSceneName,
-                });
+        for (const component of this._scenes[this._currentSceneName].components) {
+            component.sceneChange && component.sceneChange(this._currentSceneName, newSceneName);
         }
-        this._currentSceneNameRef.current = newSceneName;
+        this._currentSceneName = newSceneName;
     };
 }
 
@@ -1389,77 +1388,168 @@ const CANVAS_EVENTS = {
     POINTER_UP: 'pointerup',
 };
 
-var Canvas = ({ fill, scenes, ...props }) => {
-    const [ctx, setCtx] = useState();
-    const canvasRef = useRef();
-    const eventListeners = useRef({});
-    const sceneNameRef = useRef(Object.keys(scenes)[0]);
-    const sceneController = new CanvasSceneController(scenes, sceneNameRef);
-    useEffect(() => {
-        let requestFrameId = 0;
-        if (!ctx) {
-            setCtx(canvasRef.current.getContext('2d'));
+class ElementEventController {
+    _eventListeners;
+    _eventCallbacks;
+    constructor() {
+        this._eventListeners = new Map();
+        this._eventCallbacks = new Map();
+    }
+    on = (name, cb) => {
+        const listeners = this._eventCallbacks.get(name);
+        if (listeners) {
+            listeners.push(cb);
             return;
         }
-        for (const scene of Object.values(scenes)) {
-            for (const component of scene.components) {
-                component.init && component.init({ ctx });
-            }
-        }
-        const onWindowResize = () => {
-            if (fill) {
-                canvasRef.current.width = window.innerWidth;
-                canvasRef.current.height = window.innerHeight;
-            }
-        };
-        const drawFrame = (timestamp) => {
-            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-            for (const component of scenes[sceneNameRef.current].components) {
-                component.drawFrame({ ctx, timestamp, sceneController });
-            }
-            requestFrameId = window.requestAnimationFrame(drawFrame);
-        };
-        const execComponentEvent = (event, e, component) => {
-            const listener = component.events[event];
-            if (listener) {
-                const stop = listener(e) ?? false;
-                if (stop)
-                    return true;
-            }
-            for (const childComponent of component.children) {
-                const stop = execComponentEvent(event, e, childComponent);
-                if (stop)
-                    return true;
-            }
-        };
-        if (fill) {
-            canvasRef.current.width = window.innerWidth;
-            canvasRef.current.height = window.innerHeight;
-        }
+        this._eventCallbacks.set(name, [cb]);
+    };
+    attachEvents = (app) => {
         for (const event of Object.values(CANVAS_EVENTS)) {
-            eventListeners[event] = (e) => {
-                for (const component of scenes[sceneNameRef.current].components) {
-                    const stop = execComponentEvent(event, e, component);
-                    if (stop)
-                        break;
+            const listeners = this._eventCallbacks.get(event);
+            this._eventListeners[event] = (e) => {
+                for (const cb of listeners) {
+                    cb(app, e);
                 }
             };
-            canvasRef.current.addEventListener(event, eventListeners[event]);
+            app.canvas.addEventListener(event, this._eventListeners[event]);
         }
-        window.addEventListener('resize', onWindowResize);
-        requestFrameId = window.requestAnimationFrame(drawFrame);
-        return () => {
-            window.removeEventListener('resize', onWindowResize);
-            window.cancelAnimationFrame(requestFrameId);
-            for (const event of Object.values(CANVAS_EVENTS)) {
-                canvasRef.current.removeEventListener(event, eventListeners[event]);
-            }
+    };
+    detachEvents = (app) => {
+        for (const event of Object.values(CANVAS_EVENTS)) {
+            app.canvas.removeEventListener(event, this._eventListeners[event]);
+        }
+    };
+}
+
+class CanvasApp {
+    _requestFrameId;
+    _ctx;
+    _sceneController;
+    _elementEventController;
+    _fill;
+    _lastPointerPos;
+    _data;
+    constructor(ctx, scenes, fill) {
+        const scene = Object.keys(scenes).at(0);
+        if (!scene) {
+            throw new Error('[CanvasApp] Missing canvas scene.');
+        }
+        this._ctx = ctx;
+        this._fill = fill;
+        this._lastPointerPos = {
+            x: 0,
+            y: 0,
         };
-    }, [ctx]);
+        this._sceneController = new CanvasSceneController(scenes, scene);
+        this._elementEventController = new ElementEventController();
+        for (const scene of Object.values(scenes)) {
+            for (const component of scene.components) {
+                component.init && component.init(this);
+            }
+        }
+        this._elementEventController.on('pointermove', this.onPointerMove);
+    }
+    get currentScene() {
+        return this._sceneController.currentScene;
+    }
+    get currentSceneName() {
+        return this._sceneController.currentSceneName;
+    }
+    get scenes() {
+        return this._sceneController.scenes;
+    }
+    get ctx() {
+        return this._ctx;
+    }
+    get canvas() {
+        return this._ctx.canvas;
+    }
+    get canvasEvents() {
+        return this._elementEventController;
+    }
+    get width() {
+        return this._ctx.canvas.width;
+    }
+    get height() {
+        return this._ctx.canvas.height;
+    }
+    get lastPointerPos() {
+        return this._lastPointerPos;
+    }
+    get data() {
+        return this._data;
+    }
+    set width(value) {
+        this._ctx.canvas.width = value;
+    }
+    set height(value) {
+        this._ctx.canvas.height = value;
+    }
+    set scene(value) {
+        this._sceneController.setScene(value);
+    }
+    set data(value) {
+        this._data = value;
+    }
+    onPointerMove = (_, e) => {
+        this._lastPointerPos.x = e.offsetX;
+        this._lastPointerPos.y = e.offsetY;
+    };
+    getData = (name) => {
+        return this._data.get(name) || null;
+    };
+    setData = (name, value) => {
+        this._data.set(name, value);
+    };
+    attachEvents = () => {
+        window.addEventListener('resize', this.onWindowResize);
+        this.onWindowResize();
+        this._elementEventController.attachEvents(this);
+        this._requestFrameId = window.requestAnimationFrame(this.drawFrame);
+    };
+    detachEvents = () => {
+        window.removeEventListener('resize', this.onWindowResize);
+        window.cancelAnimationFrame(this._requestFrameId);
+        this._elementEventController.detachEvents(this);
+    };
+    onWindowResize = () => {
+        if (this._fill) {
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+        }
+    };
+    drawFrame = (timestamp) => {
+        this._ctx.clearRect(0, 0, this.width, this.height);
+        for (const component of this.currentScene.components) {
+            component.drawFrame(this, timestamp);
+        }
+        this._requestFrameId = window.requestAnimationFrame(this.drawFrame);
+    };
+}
+
+var Canvas = ({ fill, scenes, data, ...props }) => {
+    const [ctx, setCtx] = useState();
+    const canvasRef = useRef();
+    const canvasApp = useRef();
+    useEffect(() => {
+        if (!ctx) {
+            const ctx = canvasRef.current.getContext('2d');
+            canvasApp.current = new CanvasApp(ctx, scenes, fill);
+            setCtx(ctx);
+            return;
+        }
+        canvasApp.current.data = data;
+        canvasApp.current.attachEvents();
+        return () => {
+            canvasApp.current.detachEvents();
+        };
+    }, [ctx, data]);
     return jsxRuntimeExports.jsx("canvas", { ref: canvasRef, ...props });
 };
 
 class CanvasComponent {
+    _pos;
+    _size;
     _id;
     _events;
     _children;
@@ -1467,6 +1557,14 @@ class CanvasComponent {
         this._events = {};
         this._children = [];
         this._id = id;
+        this._pos = {
+            x: 0,
+            y: 0,
+        };
+        this._size = {
+            width: 0,
+            height: 0,
+        };
     }
     get events() {
         return this._events;
@@ -1477,15 +1575,41 @@ class CanvasComponent {
     get id() {
         return this._id;
     }
-    drawFrame = (props) => {
-        this.draw(props);
+    get x() {
+        return this._pos.x;
+    }
+    get y() {
+        return this._pos.y;
+    }
+    get width() {
+        return this._size.width;
+    }
+    get height() {
+        return this._size.height;
+    }
+    set x(value) {
+        this._pos.x = value;
+    }
+    set y(value) {
+        this._pos.y = value;
+    }
+    set width(value) {
+        this._size.width = value;
+    }
+    set height(value) {
+        this._size.height = value;
+    }
+    drawFrame = (app, timestamp) => {
+        this.draw(app, timestamp);
         for (const child of this.children) {
-            child.draw(props);
+            child.drawFrame(app, timestamp);
         }
     };
     addChild = (...components) => {
         this.children.push(...components);
     };
+    init;
+    sceneChange;
 }
 
 class CanvasScene {
@@ -1501,4 +1625,4 @@ class CanvasScene {
     };
 }
 
-export { CANVAS_EVENTS, CanvasComponent, CanvasScene, CanvasSceneController, Canvas as default };
+export { CANVAS_EVENTS, CanvasApp, CanvasComponent, CanvasScene, CanvasSceneController, Canvas as default };

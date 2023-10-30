@@ -1,9 +1,9 @@
-import CanvasComponentInterface from '../interface/CanvasComponentInterface';
+import CanvasComponent from './CanvasComponent';
 
 export default class CanvasScene {
-  private _components: CanvasComponentInterface[];
+  private _components: CanvasComponent[];
 
-  constructor(components: CanvasComponentInterface[]) {
+  constructor(components: CanvasComponent[]) {
     this._components = components;
   }
 

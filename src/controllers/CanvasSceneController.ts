@@ -1,20 +1,22 @@
-import { MutableRefObject } from 'react';
 import CanvasScene from '../core/CanvasScene';
 
 export default class CanvasSceneController {
   private _scenes: Record<string, CanvasScene>;
-  private _currentSceneNameRef: MutableRefObject<string>;
+  private _currentSceneName: string;
 
-  constructor(scenes: Record<string, CanvasScene>, currentSceneNameRef: MutableRefObject<string>) {
+  constructor(scenes: Record<string, CanvasScene>, currentSceneName: string) {
     this._scenes = scenes;
-    this._currentSceneNameRef = currentSceneNameRef;
+    this._currentSceneName = currentSceneName;
   }
 
   get currentSceneName() {
-    return this._currentSceneNameRef.current;
+    return this._currentSceneName;
   }
   get currentScene() {
-    return this._scenes[this._currentSceneNameRef.current];
+    return this._scenes[this._currentSceneName];
+  }
+  get scenes() {
+    return this._scenes;
   }
 
   setScene = (newSceneName: string) => {
@@ -23,14 +25,10 @@ export default class CanvasSceneController {
       return;
     }
 
-    for (const component of this._scenes[this._currentSceneNameRef.current].components) {
-      component.sceneChange &&
-        component.sceneChange({
-          currentScene: this._currentSceneNameRef.current,
-          nextScene: newSceneName,
-        });
+    for (const component of this._scenes[this._currentSceneName].components) {
+      component.sceneChange && component.sceneChange(this._currentSceneName, newSceneName);
     }
 
-    this._currentSceneNameRef.current = newSceneName;
+    this._currentSceneName = newSceneName;
   };
 }
