@@ -28,11 +28,7 @@ export default class CanvasApp {
     this._sceneController = new CanvasSceneController(scenes, scene);
     this._elementEventController = new ElementEventController();
 
-    for (const scene of Object.values(scenes)) {
-      for (const component of scene.components) {
-        component.init && component.init(this);
-      }
-    }
+    this._sceneController.init(this);
 
     this._elementEventController.on('pointermove', this.onPointerMove);
   }
@@ -74,8 +70,13 @@ export default class CanvasApp {
   set height(value: number) {
     this._ctx.canvas.height = value;
   }
-  set scene(value: string) {
+  set currentSceneName(value: string) {
+    this._elementEventController.resetEvents();
+
     this._sceneController.setScene(value);
+    this._sceneController.init(this);
+
+    this._elementEventController.reloadEvents(this);
   }
   set data(value: any) {
     this._data = value;

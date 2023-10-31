@@ -1,47 +1,6 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import { CanvasHTMLAttributes } from 'react';
 
-declare class ElementEventController {
-    private _eventListeners;
-    private _eventCallbacks;
-    constructor();
-    on: (name: string, cb: (app: CanvasApp, e: Event) => void) => void;
-    attachEvents: (app: CanvasApp) => void;
-    detachEvents: (app: CanvasApp) => void;
-}
-
-declare class CanvasApp {
-    private _requestFrameId;
-    private _ctx;
-    private _sceneController;
-    private _elementEventController;
-    private _fill;
-    private _lastPointerPos;
-    private _data;
-    constructor(ctx: CanvasRenderingContext2D, scenes: Record<string, CanvasScene>, fill: boolean);
-    get currentScene(): CanvasScene;
-    get currentSceneName(): string;
-    get scenes(): Record<string, CanvasScene>;
-    get ctx(): CanvasRenderingContext2D;
-    get canvas(): HTMLCanvasElement;
-    get canvasEvents(): ElementEventController;
-    get width(): number;
-    get height(): number;
-    get lastPointerPos(): Position;
-    get data(): any;
-    set width(value: number);
-    set height(value: number);
-    set scene(value: string);
-    set data(value: any);
-    private onPointerMove;
-    getData: (name: string) => any;
-    setData: (name: string, value: any) => void;
-    attachEvents: () => void;
-    detachEvents: () => void;
-    onWindowResize: () => void;
-    drawFrame: (timestamp: number) => void;
-}
-
 type CanvasEvent = (app: CanvasApp, e: Event) => boolean | void;
 interface Position {
     x: number;
@@ -77,10 +36,54 @@ declare abstract class CanvasComponent {
     sceneChange?: (currentScene: string, nextScene: string) => void;
 }
 
+declare class ElementEventController {
+    private _eventListeners;
+    private _eventCallbacks;
+    constructor();
+    on: (name: string, cb: (app: CanvasApp, e: Event) => void) => void;
+    attachEvents: (app: CanvasApp) => void;
+    detachEvents: (app: CanvasApp) => void;
+    resetEvents: () => void;
+    reloadEvents: (app: CanvasApp) => void;
+}
+
+declare class CanvasApp {
+    private _requestFrameId;
+    private _ctx;
+    private _sceneController;
+    private _elementEventController;
+    private _fill;
+    private _lastPointerPos;
+    private _data;
+    constructor(ctx: CanvasRenderingContext2D, scenes: Record<string, CanvasScene>, fill: boolean);
+    get currentScene(): CanvasScene;
+    get currentSceneName(): string;
+    get scenes(): Record<string, CanvasScene>;
+    get ctx(): CanvasRenderingContext2D;
+    get canvas(): HTMLCanvasElement;
+    get canvasEvents(): ElementEventController;
+    get width(): number;
+    get height(): number;
+    get lastPointerPos(): Position;
+    get data(): any;
+    set width(value: number);
+    set height(value: number);
+    set currentSceneName(value: string);
+    set data(value: any);
+    private onPointerMove;
+    getData: (name: string) => any;
+    setData: (name: string, value: any) => void;
+    attachEvents: () => void;
+    detachEvents: () => void;
+    onWindowResize: () => void;
+    drawFrame: (timestamp: number) => void;
+}
+
 declare class CanvasScene {
     private _components;
     constructor(components: CanvasComponent[]);
     get components(): CanvasComponent[];
+    init: (app: CanvasApp) => void;
     getComponent: (id: string) => CanvasComponent;
 }
 
@@ -91,12 +94,6 @@ type Props = CanvasHTMLAttributes<HTMLCanvasElement> & {
 };
 declare const _default: ({ fill, scenes, data, ...props }: Props) => react_jsx_runtime.JSX.Element;
 
-declare const CANVAS_EVENTS: {
-    POINTER_DOWN: string;
-    POINTER_MOVE: string;
-    POINTER_UP: string;
-};
-
 declare class CanvasSceneController {
     private _scenes;
     private _currentSceneName;
@@ -104,7 +101,8 @@ declare class CanvasSceneController {
     get currentSceneName(): string;
     get currentScene(): CanvasScene;
     get scenes(): Record<string, CanvasScene>;
+    init: (app: CanvasApp) => void;
     setScene: (newSceneName: string) => void;
 }
 
-export { CANVAS_EVENTS, CanvasApp, CanvasComponent, CanvasEvent, CanvasScene, CanvasSceneController, Position, Size, _default as default };
+export { CanvasApp, CanvasComponent, CanvasEvent, CanvasScene, CanvasSceneController, Position, Size, _default as default };

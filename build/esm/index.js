@@ -1370,6 +1370,9 @@ class CanvasSceneController {
     get scenes() {
         return this._scenes;
     }
+    init = (app) => {
+        this.currentScene.init(app);
+    };
     setScene = (newSceneName) => {
         if (!Object.keys(this._scenes).includes(newSceneName)) {
             console.error(`[CanvasSceneController] Scene ${newSceneName} was not found.`);
@@ -1381,12 +1384,6 @@ class CanvasSceneController {
         this._currentSceneName = newSceneName;
     };
 }
-
-const CANVAS_EVENTS = {
-    POINTER_DOWN: 'pointerdown',
-    POINTER_MOVE: 'pointermove',
-    POINTER_UP: 'pointerup',
-};
 
 class ElementEventController {
     _eventListeners;
@@ -1404,7 +1401,7 @@ class ElementEventController {
         this._eventCallbacks.set(name, [cb]);
     };
     attachEvents = (app) => {
-        for (const event of Object.values(CANVAS_EVENTS)) {
+        for (const event of this._eventCallbacks.keys()) {
             const listeners = this._eventCallbacks.get(event);
             this._eventListeners[event] = (e) => {
                 for (const cb of listeners) {
@@ -1415,9 +1412,17 @@ class ElementEventController {
         }
     };
     detachEvents = (app) => {
-        for (const event of Object.values(CANVAS_EVENTS)) {
+        for (const event of this._eventCallbacks.keys()) {
             app.canvas.removeEventListener(event, this._eventListeners[event]);
         }
+        this._eventListeners = new Map();
+    };
+    resetEvents = () => {
+        this._eventCallbacks = new Map();
+    };
+    reloadEvents = (app) => {
+        this.detachEvents(app);
+        this.attachEvents(app);
     };
 }
 
@@ -1442,11 +1447,7 @@ class CanvasApp {
         };
         this._sceneController = new CanvasSceneController(scenes, scene);
         this._elementEventController = new ElementEventController();
-        for (const scene of Object.values(scenes)) {
-            for (const component of scene.components) {
-                component.init && component.init(this);
-            }
-        }
+        this._sceneController.init(this);
         this._elementEventController.on('pointermove', this.onPointerMove);
     }
     get currentScene() {
@@ -1485,8 +1486,11 @@ class CanvasApp {
     set height(value) {
         this._ctx.canvas.height = value;
     }
-    set scene(value) {
+    set currentSceneName(value) {
+        this._elementEventController.resetEvents();
         this._sceneController.setScene(value);
+        this._sceneController.init(this);
+        this._elementEventController.reloadEvents(this);
     }
     set data(value) {
         this._data = value;
@@ -1620,9 +1624,14 @@ class CanvasScene {
     get components() {
         return this._components;
     }
+    init = (app) => {
+        for (const component of this._components) {
+            component.init && component.init(app);
+        }
+    };
     getComponent = (id) => {
         return this._components.find((c) => c.id === id) || null;
     };
 }
 
-export { CANVAS_EVENTS, CanvasApp, CanvasComponent, CanvasScene, CanvasSceneController, Canvas as default };
+export { CanvasApp, CanvasComponent, CanvasScene, CanvasSceneController, Canvas as default };

@@ -1,3 +1,4 @@
+import { CanvasApp } from '../core';
 import CanvasScene from '../core/CanvasScene';
 
 export default class CanvasSceneController {
@@ -18,6 +19,10 @@ export default class CanvasSceneController {
   get scenes() {
     return this._scenes;
   }
+
+  init = (app: CanvasApp) => {
+    this.currentScene.init(app);
+  };
 
   setScene = (newSceneName: string) => {
     if (!Object.keys(this._scenes).includes(newSceneName)) {

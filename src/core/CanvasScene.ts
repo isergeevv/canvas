@@ -1,3 +1,4 @@
+import CanvasApp from './CanvasApp';
 import CanvasComponent from './CanvasComponent';
 
 export default class CanvasScene {
@@ -10,6 +11,12 @@ export default class CanvasScene {
   get components() {
     return this._components;
   }
+
+  init = (app: CanvasApp) => {
+    for (const component of this._components) {
+      component.init && component.init(app);
+    }
+  };
 
   getComponent = (id: string) => {
     return this._components.find((c) => c.id === id) || null;
