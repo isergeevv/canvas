@@ -1438,11 +1438,13 @@ class CanvasApp {
     _fill;
     _lastPointerPos;
     _data;
+    _state;
     constructor(ctx, scenes, fill) {
         const scene = Object.keys(scenes).at(0);
         if (!scene) {
             throw new Error('[CanvasApp] Missing canvas scene.');
         }
+        this._state = new Map();
         this._ctx = ctx;
         this._fill = fill;
         this._lastPointerPos = {
@@ -1508,6 +1510,12 @@ class CanvasApp {
     };
     setData = (name, value) => {
         this._data.set(name, value);
+    };
+    getState = (name) => {
+        return this._state.get(name) || null;
+    };
+    setState = (name, value) => {
+        this._state.set(name, value);
     };
     attachEvents = () => {
         window.addEventListener('resize', this.onWindowResize);

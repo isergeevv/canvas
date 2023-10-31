@@ -55,6 +55,7 @@ declare class CanvasApp {
     private _fill;
     private _lastPointerPos;
     private _data;
+    private _state;
     constructor(ctx: CanvasRenderingContext2D, scenes: Record<string, CanvasScene>, fill: boolean);
     get currentScene(): CanvasScene;
     get currentSceneName(): string;
@@ -73,6 +74,8 @@ declare class CanvasApp {
     private onPointerMove;
     getData: (name: string) => any;
     setData: (name: string, value: any) => void;
+    getState: (name: string) => any;
+    setState: (name: string, value: any) => void;
     attachEvents: () => void;
     detachEvents: () => void;
     onWindowResize: () => void;

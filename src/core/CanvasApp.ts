@@ -11,6 +11,7 @@ export default class CanvasApp {
   private _fill: boolean;
   private _lastPointerPos: Position;
   private _data: any;
+  private _state: Map<string, any>;
 
   constructor(ctx: CanvasRenderingContext2D, scenes: Record<string, CanvasScene>, fill: boolean) {
     const scene = Object.keys(scenes).at(0);
@@ -18,6 +19,7 @@ export default class CanvasApp {
       throw new Error('[CanvasApp] Missing canvas scene.');
     }
 
+    this._state = new Map();
     this._ctx = ctx;
     this._fill = fill;
     this._lastPointerPos = {
@@ -93,6 +95,14 @@ export default class CanvasApp {
 
   setData = (name: string, value: any) => {
     this._data.set(name, value);
+  };
+
+  getState = (name: string) => {
+    return this._state.get(name) || null;
+  };
+
+  setState = (name: string, value: any) => {
+    this._state.set(name, value);
   };
 
   attachEvents = () => {
