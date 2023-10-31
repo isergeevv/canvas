@@ -1501,12 +1501,6 @@ class CanvasApp {
         this._lastPointerPos.x = e.offsetX;
         this._lastPointerPos.y = e.offsetY;
     };
-    getData = (name) => {
-        return this._data.get(name) || null;
-    };
-    setData = (name, value) => {
-        this._data.set(name, value);
-    };
     getState = (name) => {
         return this._state.get(name) || null;
     };

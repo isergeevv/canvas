@@ -72,8 +72,6 @@ declare class CanvasApp {
     set currentSceneName(value: string);
     set data(value: any);
     private onPointerMove;
-    getData: (name: string) => any;
-    setData: (name: string, value: any) => void;
     getState: (name: string) => any;
     setState: (name: string, value: any) => void;
     attachEvents: () => void;

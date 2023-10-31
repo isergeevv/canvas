@@ -89,14 +89,6 @@ export default class CanvasApp {
     this._lastPointerPos.y = e.offsetY;
   };
 
-  getData = (name: string) => {
-    return this._data.get(name) || null;
-  };
-
-  setData = (name: string, value: any) => {
-    this._data.set(name, value);
-  };
-
   getState = (name: string) => {
     return this._state.get(name) || null;
   };
