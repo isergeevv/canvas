@@ -1,79 +1,116 @@
-import * as react_jsx_runtime from 'react/jsx-runtime';
-import { MutableRefObject, CanvasHTMLAttributes } from 'react';
-
-declare class CanvasSceneController {
-    private _scenes;
-    private _currentSceneNameRef;
-    constructor(scenes: Record<string, CanvasScene>, currentSceneNameRef: MutableRefObject<string>);
-    get currentSceneName(): string;
-    get currentScene(): CanvasScene;
-    setScene: (newSceneName: string) => void;
+type CanvasEvent = (app: CanvasApp, e: Event) => boolean | void;
+type ComponentEvent = () => void;
+type AppEvent = () => void;
+interface Position {
+    x: number;
+    y: number;
+}
+interface Size {
+    width: number;
+    height: number;
 }
 
-interface CanvasComponentDrawProps {
-    ctx: CanvasRenderingContext2D;
-    timestamp: number;
-    sceneController: CanvasSceneController;
-}
-interface CanvasComponentInitProps {
-}
-interface CanvasComponentSceneChangeProps {
-    currentScene: string;
-    nextScene: string;
-}
-type CanvasComponentEvent = (e: Event) => boolean | void;
-interface CanvasComponentProps {
-    draw: (props: CanvasComponentDrawProps) => boolean | void;
-    id?: string;
-    events?: Record<string, CanvasComponentEvent>;
-    init?: (props: CanvasComponentInitProps) => void;
-    sceneChange?: (props: CanvasComponentSceneChangeProps) => void;
+declare class ElementEventController {
+    private _eventListeners;
+    private _eventCallbacks;
+    constructor();
+    on: (name: string, cb: CanvasEvent) => void;
+    attachEvents: (app: CanvasApp) => void;
+    detachEvents: (app: CanvasApp) => void;
+    resetEvents: () => void;
+    reloadEvents: (app: CanvasApp) => void;
 }
 
-interface CanvasComponentInterface {
-    events: Record<string, CanvasComponentEvent>;
-    children: CanvasComponentInterface[];
-    id: string;
-    drawFrame: (props: CanvasComponentDrawProps) => void;
-    draw: (props: CanvasComponentDrawProps) => void;
-}
-interface CanvasComponentInterface {
-    init?: (props: CanvasComponentInitProps) => void;
-}
-interface CanvasComponentInterface {
-    sceneChange?: (props: CanvasComponentSceneChangeProps) => void;
+declare abstract class CanvasComponent {
+    private _pos;
+    private _size;
+    private _id;
+    private _children;
+    private _parent;
+    private _events;
+    constructor(id?: string);
+    get children(): CanvasComponent[];
+    get id(): string;
+    get x(): number;
+    get y(): number;
+    get width(): number;
+    get height(): number;
+    get parent(): CanvasComponent | CanvasApp;
+    set x(value: number);
+    set y(value: number);
+    set width(value: number);
+    set height(value: number);
+    set parent(value: CanvasComponent | CanvasApp);
+    on: (name: string, cb: ComponentEvent) => void;
+    emit: (name: string) => void;
+    removeListener: (name: string, cb: ComponentEvent) => void;
+    drawFrame: (app: CanvasApp, timestamp: number) => void;
+    addChild: (...components: CanvasComponent[]) => void;
+    abstract draw(app: CanvasApp, timestamp: number): boolean | void;
+    init?: (app: CanvasApp) => void;
 }
 
 declare class CanvasScene {
     private _components;
-    constructor(components: CanvasComponentInterface[]);
-    get components(): CanvasComponentInterface[];
-    getComponent: (id: string) => CanvasComponentInterface;
+    constructor(components: CanvasComponent[]);
+    get components(): CanvasComponent[];
+    init: (app: CanvasApp) => void;
+    getComponent: (id: string) => CanvasComponent;
+    addComponent: (component: CanvasComponent) => void;
 }
 
-type Props = CanvasHTMLAttributes<HTMLCanvasElement> & {
-    fill: boolean;
-    scenes: Record<string, CanvasScene>;
-};
-declare const _default: ({ fill, scenes, ...props }: Props) => react_jsx_runtime.JSX.Element;
-
-declare const CANVAS_EVENTS: {
-    POINTER_DOWN: string;
-    POINTER_MOVE: string;
-    POINTER_UP: string;
-};
-
-declare abstract class CanvasComponent implements CanvasComponentInterface {
-    private _id;
+declare class CanvasApp {
+    private _requestFrameId;
+    private _ctx;
+    private _sceneController;
+    private _elementEventController;
+    private _fill;
+    private _lastPointerPos;
+    private _data;
+    private _state;
     private _events;
-    private _children;
-    constructor(id?: string);
-    get events(): Record<string, CanvasComponentEvent>;
-    get children(): CanvasComponentInterface[];
-    get id(): string;
-    drawFrame: (props: CanvasComponentDrawProps) => void;
-    addChild: (...components: CanvasComponent[]) => void;
-    abstract draw(props: CanvasComponentDrawProps): boolean | void;
+    constructor(fill: boolean);
+    get x(): number;
+    get y(): number;
+    get currentScene(): CanvasScene;
+    get currentSceneName(): string;
+    get scenes(): Record<string, CanvasScene>;
+    get ctx(): CanvasRenderingContext2D;
+    get canvas(): HTMLCanvasElement;
+    get canvasEvents(): ElementEventController;
+    get width(): number;
+    get height(): number;
+    get lastPointerPos(): Position;
+    get data(): any;
+    set width(value: number);
+    set height(value: number);
+    set currentSceneName(value: string);
+    set data(value: any);
+    init: (ctx: CanvasRenderingContext2D, startScene?: string) => void;
+    private onPointerMove;
+    on: (name: string, cb: AppEvent) => void;
+    emit: (name: string) => void;
+    removeListener: (name: string, cb: AppEvent) => void;
+    getState: (name: string) => any;
+    setState: (name: string, value: any) => void;
+    attachEvents: () => void;
+    detachEvents: () => void;
+    onWindowResize: () => void;
+    drawFrame: (timestamp: number) => void;
+    addScene: (sceneName: string, scene: CanvasScene) => void;
 }
 
-export { CANVAS_EVENTS, CanvasComponent, CanvasComponentDrawProps, CanvasComponentEvent, CanvasComponentInitProps, CanvasComponentInterface, CanvasComponentProps, CanvasComponentSceneChangeProps, CanvasScene, CanvasSceneController, _default as default };
+declare class CanvasSceneController {
+    private _scenes;
+    private _currentSceneName;
+    constructor();
+    get currentSceneName(): string;
+    get currentScene(): CanvasScene;
+    get scenes(): Record<string, CanvasScene>;
+    init: (startScene?: string) => void;
+    initSceneComponents: (app: CanvasApp, components: CanvasComponent[]) => void;
+    setScene: (newSceneName: string) => void;
+    addScene: (sceneName: string, scene: CanvasScene) => void;
+}
+
+export { AppEvent, CanvasApp, CanvasComponent, CanvasEvent, CanvasScene, CanvasSceneController, ComponentEvent, Position, Size };

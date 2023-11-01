@@ -1,24 +1,17 @@
-import CanvasSceneController from './controllers/CanvasSceneController';
+import { CanvasApp } from './core';
 
-export interface CanvasComponentDrawProps {
-  ctx: CanvasRenderingContext2D;
-  timestamp: number;
-  sceneController: CanvasSceneController;
+export type CanvasEvent = (app: CanvasApp, e: Event) => boolean | void;
+
+export type ComponentEvent = () => void;
+
+export type AppEvent = () => void;
+
+export interface Position {
+  x: number;
+  y: number;
 }
 
-export interface CanvasComponentInitProps {}
-
-export interface CanvasComponentSceneChangeProps {
-  currentScene: string;
-  nextScene: string;
-}
-
-export type CanvasComponentEvent = (e: Event) => boolean | void;
-
-export interface CanvasComponentProps {
-  draw: (props: CanvasComponentDrawProps) => boolean | void;
-  id?: string;
-  events?: Record<string, CanvasComponentEvent>;
-  init?: (props: CanvasComponentInitProps) => void;
-  sceneChange?: (props: CanvasComponentSceneChangeProps) => void;
+export interface Size {
+  width: number;
+  height: number;
 }

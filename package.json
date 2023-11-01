@@ -1,6 +1,6 @@
 {
-  "name": "@isergeevv/react-canvas",
-  "version": "0.0.11",
+  "name": "@isergeevv/canvas",
+  "version": "0.0.17",
   "description": "",
   "type": "module",
   "main": "./build/esm/index.js",
@@ -15,15 +15,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/isergeevv/react-canvas.git"
+    "url": "git+https://github.com/isergeevv/canvas.git"
   },
   "keywords": [],
   "author": "isergeevv",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/isergeevv/react-canvas/issues"
+    "url": "https://github.com/isergeevv/canvas/issues"
   },
-  "homepage": "https://github.com/isergeevv/react-canvas#readme",
+  "homepage": "https://github.com/isergeevv/canvas#readme",
   "publishConfig": {
     "@isergeevv:registry": "https://npm.pkg.github.com"
   },

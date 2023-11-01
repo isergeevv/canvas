@@ -1,3 +1,1 @@
-import CanvasSceneController from './CanvasSceneController';
-
-export { CanvasSceneController };
+export { default as CanvasSceneController } from './CanvasSceneController';
