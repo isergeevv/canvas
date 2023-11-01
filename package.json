@@ -1,6 +1,6 @@
 {
   "name": "@isergeevv/react-canvas",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "",
   "type": "module",
   "main": "./build/esm/index.js",
