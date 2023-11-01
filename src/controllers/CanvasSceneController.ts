@@ -1,13 +1,12 @@
-import { CanvasApp } from '../core';
+import { CanvasApp, CanvasComponent } from '../core';
 import CanvasScene from '../core/CanvasScene';
 
 export default class CanvasSceneController {
   private _scenes: Record<string, CanvasScene>;
   private _currentSceneName: string;
 
-  constructor(scenes: Record<string, CanvasScene>, currentSceneName: string) {
-    this._scenes = scenes;
-    this._currentSceneName = currentSceneName;
+  constructor() {
+    this._scenes = {};
   }
 
   get currentSceneName() {
@@ -20,8 +19,20 @@ export default class CanvasSceneController {
     return this._scenes;
   }
 
-  init = (app: CanvasApp) => {
-    this.currentScene.init(app);
+  init = (startScene?: string) => {
+    const firstSceneName = startScene || Object.keys(this._scenes).at(0);
+    if (!firstSceneName) {
+      throw new Error('[CanvasApp] Missing canvas scene.');
+    }
+
+    this._currentSceneName = firstSceneName;
+  };
+
+  initSceneComponents = (app: CanvasApp, components: CanvasComponent[]) => {
+    for (const component of components) {
+      component.init && component.init(app);
+      this.initSceneComponents(app, component.children);
+    }
   };
 
   setScene = (newSceneName: string) => {
@@ -30,10 +41,10 @@ export default class CanvasSceneController {
       return;
     }
 
-    for (const component of this._scenes[this._currentSceneName].components) {
-      component.sceneChange && component.sceneChange(this._currentSceneName, newSceneName);
-    }
-
     this._currentSceneName = newSceneName;
+  };
+
+  addScene = (sceneName: string, scene: CanvasScene) => {
+    this._scenes[sceneName] = scene;
   };
 }

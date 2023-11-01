@@ -21,4 +21,8 @@ export default class CanvasScene {
   getComponent = (id: string) => {
     return this._components.find((c) => c.id === id) || null;
   };
+
+  addComponent = (component: CanvasComponent) => {
+    this._components.push(component);
+  };
 }

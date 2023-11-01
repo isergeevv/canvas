@@ -10,7 +10,7 @@ export default class ElementEventController {
     this._eventCallbacks = new Map();
   }
 
-  on = (name: string, cb: (app: CanvasApp, e: Event) => void) => {
+  on = (name: string, cb: CanvasEvent) => {
     const listeners = this._eventCallbacks.get(name);
     if (listeners) {
       listeners.push(cb);

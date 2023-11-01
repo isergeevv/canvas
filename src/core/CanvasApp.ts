@@ -1,6 +1,7 @@
 import { CanvasSceneController } from '../controllers';
 import ElementEventController from '../controllers/ElementEventController';
-import { Position } from '../types';
+import { AppEvent, Position } from '../types';
+import CanvasComponent from './CanvasComponent';
 import CanvasScene from './CanvasScene';
 
 export default class CanvasApp {
@@ -12,27 +13,27 @@ export default class CanvasApp {
   private _lastPointerPos: Position;
   private _data: any;
   private _state: Map<string, any>;
+  private _events: Map<string, AppEvent[]>;
 
-  constructor(ctx: CanvasRenderingContext2D, scenes: Record<string, CanvasScene>, fill: boolean) {
-    const scene = Object.keys(scenes).at(0);
-    if (!scene) {
-      throw new Error('[CanvasApp] Missing canvas scene.');
-    }
-
+  constructor(fill: boolean) {
+    this._events = new Map();
     this._state = new Map();
-    this._ctx = ctx;
+
     this._fill = fill;
     this._lastPointerPos = {
       x: 0,
       y: 0,
     };
 
-    this._sceneController = new CanvasSceneController(scenes, scene);
+    this._sceneController = new CanvasSceneController();
     this._elementEventController = new ElementEventController();
+  }
 
-    this._sceneController.init(this);
-
-    this._elementEventController.on('pointermove', this.onPointerMove);
+  get x() {
+    return 0;
+  }
+  get y() {
+    return 0;
   }
 
   get currentScene() {
@@ -76,17 +77,51 @@ export default class CanvasApp {
     this._elementEventController.resetEvents();
 
     this._sceneController.setScene(value);
-    this._sceneController.init(this);
+    this._sceneController.currentScene.init(this);
 
     this._elementEventController.reloadEvents(this);
+
+    this.emit('sceneChange');
   }
   set data(value: any) {
     this._data = value;
   }
 
+  init = (ctx: CanvasRenderingContext2D, startScene?: string) => {
+    this._ctx = ctx;
+
+    this._sceneController.init(startScene);
+    this._sceneController.initSceneComponents(this, this.currentScene.components);
+
+    this._elementEventController.on('pointermove', this.onPointerMove);
+  };
+
   private onPointerMove = (_: CanvasApp, e: PointerEvent) => {
     this._lastPointerPos.x = e.offsetX;
     this._lastPointerPos.y = e.offsetY;
+  };
+
+  on = (name: string, cb: AppEvent) => {
+    const listeners = this._events.get(name);
+    if (listeners) {
+      listeners.push(cb);
+      return;
+    }
+    this._events.set(name, [cb]);
+  };
+
+  emit = (name: string) => {
+    const listeners = this._events.get(name) || [];
+    for (const listener of listeners) {
+      listener();
+    }
+  };
+
+  removeListener = (name: string, cb: AppEvent) => {
+    this._events.set(
+      name,
+      (this._events.get(name) || []).filter((listener) => listener !== cb),
+    );
   };
 
   getState = (name: string) => {
@@ -127,5 +162,9 @@ export default class CanvasApp {
     }
 
     this._requestFrameId = window.requestAnimationFrame(this.drawFrame);
+  };
+
+  addScene = (sceneName: string, scene: CanvasScene) => {
+    this._sceneController.addScene(sceneName, scene);
   };
 }
