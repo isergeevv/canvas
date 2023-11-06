@@ -1,7 +1,6 @@
 import { CanvasSceneController } from '../controllers';
 import ElementEventController from '../controllers/ElementEventController';
-import { AppEvent, Position } from '../types';
-import CanvasComponent from './CanvasComponent';
+import { CanvasAppEventHandler, CanvasAppEvents, Position } from '../types';
 import CanvasScene from './CanvasScene';
 
 export default class CanvasApp {
@@ -13,7 +12,7 @@ export default class CanvasApp {
   private _lastPointerPos: Position;
   private _data: any;
   private _state: Map<string, any>;
-  private _events: Map<string, AppEvent[]>;
+  private _events: Map<string, CanvasAppEventHandler[]>;
 
   constructor(fill: boolean) {
     this._events = new Map();
@@ -76,12 +75,19 @@ export default class CanvasApp {
   set currentSceneName(value: string) {
     this._elementEventController.resetEvents();
 
+    const oldSceneName = this._sceneController.currentSceneName;
+    this._sceneController.destroySceneComponents(this, this.currentScene.components);
+
     this._sceneController.setScene(value);
     this._sceneController.currentScene.init(this);
 
     this._elementEventController.reloadEvents(this);
 
-    this.emit('sceneChange');
+    this.emit('sceneChange', {
+      app: this,
+      previous: oldSceneName,
+      current: this._sceneController.currentSceneName,
+    });
   }
   set data(value: any) {
     this._data = value;
@@ -101,7 +107,7 @@ export default class CanvasApp {
     this._lastPointerPos.y = e.offsetY;
   };
 
-  on = (name: string, cb: AppEvent) => {
+  on = <T extends keyof CanvasAppEvents>(name: T, cb: CanvasAppEventHandler) => {
     const listeners = this._events.get(name);
     if (listeners) {
       listeners.push(cb);
@@ -110,14 +116,14 @@ export default class CanvasApp {
     this._events.set(name, [cb]);
   };
 
-  emit = (name: string) => {
+  emit = <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => {
     const listeners = this._events.get(name) || [];
     for (const listener of listeners) {
-      listener();
+      listener(e);
     }
   };
 
-  removeListener = (name: string, cb: AppEvent) => {
+  removeListener = (name: string, cb: CanvasAppEventHandler) => {
     this._events.set(
       name,
       (this._events.get(name) || []).filter((listener) => listener !== cb),
@@ -149,22 +155,31 @@ export default class CanvasApp {
   };
 
   onWindowResize = () => {
-    if (this._fill) {
-      this.width = window.innerWidth;
-      this.height = window.innerHeight;
-    }
+    if (!this._fill) return;
+
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
   };
 
   drawFrame = (timestamp: number) => {
+    const components = this.currentScene.components;
+
+    for (const component of components) {
+      component.prepareFrame(this, timestamp);
+    }
+
     this._ctx.clearRect(0, 0, this.width, this.height);
-    for (const component of this.currentScene.components) {
-      component.drawFrame(this, timestamp);
+    for (const component of components) {
+      component.drawFrame(this._ctx);
     }
 
     this._requestFrameId = window.requestAnimationFrame(this.drawFrame);
   };
 
   addScene = (sceneName: string, scene: CanvasScene) => {
+    for (const component of scene.components) {
+      component.parent = this;
+    }
     this._sceneController.addScene(sceneName, scene);
   };
 }

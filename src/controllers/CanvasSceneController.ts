@@ -19,6 +19,13 @@ export default class CanvasSceneController {
     return this._scenes;
   }
 
+  destroySceneComponents = (app: CanvasApp, components: CanvasComponent[]) => {
+    for (const component of components) {
+      component.destroy && component.destroy(app);
+      this.destroySceneComponents(app, component.children);
+    }
+  };
+
   init = (startScene?: string) => {
     const firstSceneName = startScene || Object.keys(this._scenes).at(0);
     if (!firstSceneName) {

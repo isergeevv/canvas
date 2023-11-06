@@ -1,23 +1,35 @@
 import { CanvasApp } from '../core';
-import { CanvasEvent } from '../types';
+import { ElementEventHandler } from '../types';
 
 export default class ElementEventController {
-  private _eventListeners: Map<string, EventListener[]>;
-  private _eventCallbacks: Map<string, CanvasEvent[]>;
+  private _eventListeners: Record<string, EventListener>;
+  private _eventCallbacks: Map<string, ElementEventHandler[]>;
 
   constructor() {
-    this._eventListeners = new Map();
+    this._eventListeners = {};
     this._eventCallbacks = new Map();
   }
 
-  on = (name: string, cb: CanvasEvent) => {
-    const listeners = this._eventCallbacks.get(name);
-    if (listeners) {
-      listeners.push(cb);
+  on = (name: string, cb: ElementEventHandler) => {
+    const callbacks = this._eventCallbacks.get(name);
+    if (callbacks) {
+      callbacks.push(cb);
       return;
     }
 
     this._eventCallbacks.set(name, [cb]);
+  };
+
+  removeListener = (app: CanvasApp, name: string, cb: ElementEventHandler) => {
+    const callbacks = this._eventCallbacks.get(name);
+    if (!callbacks) return;
+
+    this._eventCallbacks.set(
+      name,
+      callbacks.filter((l) => l !== cb),
+    );
+
+    this.reloadEvents(app);
   };
 
   attachEvents = (app: CanvasApp) => {
@@ -34,10 +46,11 @@ export default class ElementEventController {
   };
 
   detachEvents = (app: CanvasApp) => {
-    for (const event of this._eventCallbacks.keys()) {
+    for (const event of Object.keys(this._eventListeners)) {
       app.canvas.removeEventListener(event, this._eventListeners[event]);
     }
-    this._eventListeners = new Map();
+    this._eventListeners = {};
+    this._eventCallbacks = new Map();
   };
 
   resetEvents = () => {

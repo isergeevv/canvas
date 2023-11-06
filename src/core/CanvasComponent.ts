@@ -1,4 +1,4 @@
-import { CanvasEvent, ComponentEvent, Position, Size } from '../types';
+import { CanvasAppEventHandler, CanvasAppEvents, Position, Size } from '../types';
 import CanvasApp from './CanvasApp';
 
 export default abstract class CanvasComponent {
@@ -7,7 +7,7 @@ export default abstract class CanvasComponent {
   private _id: string;
   private _children: CanvasComponent[];
   private _parent: CanvasComponent | CanvasApp;
-  private _events: Map<string, ComponentEvent[]>;
+  private _events: Map<string, CanvasAppEventHandler[]>;
 
   constructor(id = '') {
     this._events = new Map();
@@ -61,7 +61,7 @@ export default abstract class CanvasComponent {
     this._parent = value;
   }
 
-  on = (name: string, cb: ComponentEvent) => {
+  on = <T extends keyof CanvasAppEvents>(name: T, cb: CanvasAppEventHandler) => {
     const listeners = this._events.get(name);
     if (listeners) {
       listeners.push(cb);
@@ -70,25 +70,32 @@ export default abstract class CanvasComponent {
     this._events.set(name, [cb]);
   };
 
-  emit = (name: string) => {
+  emit = <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => {
     const listeners = this._events.get(name) || [];
     for (const listener of listeners) {
-      listener();
+      listener(e);
     }
   };
 
-  removeListener = (name: string, cb: ComponentEvent) => {
+  removeListener = (name: string, cb: CanvasAppEventHandler) => {
     this._events.set(
       name,
       (this._events.get(name) || []).filter((listener) => listener !== cb),
     );
   };
 
-  drawFrame = (app: CanvasApp, timestamp: number) => {
-    this.draw(app, timestamp);
+  prepareFrame = (app: CanvasApp, timestamp: number) => {
+    if (this.prepare && this.prepare(app, timestamp)) return;
 
     for (const child of this.children) {
-      child.drawFrame(app, timestamp);
+      child.prepareFrame(app, timestamp);
+    }
+  };
+
+  drawFrame = (ctx: CanvasRenderingContext2D) => {
+    this.draw(ctx);
+    for (const child of this.children) {
+      child.drawFrame(ctx);
     }
   };
 
@@ -99,7 +106,11 @@ export default abstract class CanvasComponent {
     }
   };
 
-  abstract draw(app: CanvasApp, timestamp: number): boolean | void;
+  abstract draw(ctx: CanvasRenderingContext2D): void;
 
   init?: (app: CanvasApp) => void;
+
+  prepare?: (app: CanvasApp, timestamp: number) => boolean | void;
+
+  destroy?: (app: CanvasApp) => void;
 }
