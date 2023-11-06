@@ -1,9 +1,10 @@
-import { CanvasAppEventHandler, CanvasAppEvents, Position, Size } from '../types';
+import { CanvasAppEventHandler, CanvasAppEvents, Position, Size, To } from '../types';
 import CanvasApp from './CanvasApp';
 
 export default abstract class CanvasComponent {
   private _pos: Position;
   private _size: Size;
+  private _to: To;
   private _id: string;
   private _children: CanvasComponent[];
   private _parent: CanvasComponent | CanvasApp;
@@ -18,6 +19,12 @@ export default abstract class CanvasComponent {
       y: 0,
     };
     this._size = {
+      width: 0,
+      height: 0,
+    };
+    this._to = {
+      x: 0,
+      y: 0,
       width: 0,
       height: 0,
     };
@@ -43,6 +50,9 @@ export default abstract class CanvasComponent {
   }
   get parent() {
     return this._parent;
+  }
+  get to() {
+    return this._to;
   }
 
   set x(value: number) {

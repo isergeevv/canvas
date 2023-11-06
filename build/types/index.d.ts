@@ -10,6 +10,7 @@ interface S {
     w: number;
     h: number;
 }
+type To = Position & Size;
 type ElementEventHandler = (app: CanvasApp, event: Event) => void;
 interface CanvasAppEvent {
     app: CanvasApp;
@@ -44,6 +45,7 @@ declare class ElementEventController {
 declare abstract class CanvasComponent {
     private _pos;
     private _size;
+    private _to;
     private _id;
     private _children;
     private _parent;
@@ -56,6 +58,7 @@ declare abstract class CanvasComponent {
     get width(): number;
     get height(): number;
     get parent(): CanvasComponent | CanvasApp;
+    get to(): To;
     set x(value: number);
     set y(value: number);
     set width(value: number);
@@ -137,4 +140,4 @@ declare class CanvasSceneController {
     addScene: (sceneName: string, scene: CanvasScene) => void;
 }
 
-export { CanvasApp, CanvasAppEvent, CanvasAppEventHandler, CanvasAppEvents, CanvasAppPointerEvent, CanvasAppSwitchSceneEvent, CanvasComponent, CanvasScene, CanvasSceneController, ElementEventHandler, Position, S, Size };
+export { CanvasApp, CanvasAppEvent, CanvasAppEventHandler, CanvasAppEvents, CanvasAppPointerEvent, CanvasAppSwitchSceneEvent, CanvasComponent, CanvasScene, CanvasSceneController, ElementEventHandler, Position, S, Size, To };

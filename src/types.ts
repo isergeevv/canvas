@@ -15,6 +15,8 @@ export interface S {
   h: number;
 }
 
+export type To = Position & Size;
+
 export type ElementEventHandler = (app: CanvasApp, event: Event) => void;
 
 export interface CanvasAppEvent {

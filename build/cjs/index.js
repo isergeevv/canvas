@@ -246,6 +246,7 @@ class CanvasApp {
 class CanvasComponent {
     _pos;
     _size;
+    _to;
     _id;
     _children;
     _parent;
@@ -259,6 +260,12 @@ class CanvasComponent {
             y: 0,
         };
         this._size = {
+            width: 0,
+            height: 0,
+        };
+        this._to = {
+            x: 0,
+            y: 0,
             width: 0,
             height: 0,
         };
@@ -283,6 +290,9 @@ class CanvasComponent {
     }
     get parent() {
         return this._parent;
+    }
+    get to() {
+        return this._to;
     }
     set x(value) {
         this._pos.x = value;
