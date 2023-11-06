@@ -37,4 +37,4 @@ export type CanvasAppEvents = {
   pointerUp: CanvasAppPointerEvent;
 };
 
-export type CanvasAppEventHandler = (e: CanvasAppEvent) => void;
+export type CanvasAppEventHandler = <T extends keyof CanvasAppEvents>(e: CanvasAppEvents[T]) => void;

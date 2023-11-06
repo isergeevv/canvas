@@ -28,7 +28,7 @@ type CanvasAppEvents = {
     pointerMove: CanvasAppPointerEvent;
     pointerUp: CanvasAppPointerEvent;
 };
-type CanvasAppEventHandler = (e: CanvasAppEvent) => void;
+type CanvasAppEventHandler = <T extends keyof CanvasAppEvents>(e: CanvasAppEvents[T]) => void;
 
 declare class ElementEventController {
     private _eventListeners;
