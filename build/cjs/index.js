@@ -1,5 +1,7 @@
 'use strict';
 
+var EventEmitter = require('events');
+
 class CanvasSceneController {
     _scenes;
     _currentSceneName;
@@ -96,7 +98,6 @@ class ElementEventController {
 }
 
 class CanvasApp {
-    _requestFrameId;
     _ctx;
     _sceneController;
     _elementEventController;
@@ -106,7 +107,7 @@ class CanvasApp {
     _state;
     _events;
     constructor(fill) {
-        this._events = new Map();
+        this._events = new EventEmitter();
         this._state = new Map();
         this._fill = fill;
         this._lastPointerPos = {
@@ -174,32 +175,46 @@ class CanvasApp {
     set data(value) {
         this._data = value;
     }
+    loadAssets = async () => {
+        for (const scene of Object.values(this._sceneController.scenes)) {
+            for (const component of scene.components) {
+                console.log(component.id, component.loadAssets);
+                const assets = component.loadAssets && component.loadAssets();
+                if (!assets)
+                    continue;
+                const images = await Promise.all(Object.keys(assets).map((key) => new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onerror = (e) => reject(`${assets[key]} failed to load`);
+                    img.onload = (e) => resolve(img);
+                    img.src = assets[key];
+                })));
+                console.log(images);
+            }
+        }
+    };
     init = (ctx, startScene) => {
         this._ctx = ctx;
         this._sceneController.init(startScene);
         this._sceneController.initSceneComponents(this, this.currentScene.components);
         this._elementEventController.on('pointermove', this.onPointerMove);
+        window.requestAnimationFrame(this.drawFrame);
+        this.loadAssets();
     };
     onPointerMove = (_, e) => {
         this._lastPointerPos.x = e.offsetX;
         this._lastPointerPos.y = e.offsetY;
     };
-    on = (name, cb) => {
-        const listeners = this._events.get(name);
-        if (listeners) {
-            listeners.push(cb);
-            return;
-        }
-        this._events.set(name, [cb]);
+    once = (name, handler) => {
+        this._events.once(name, handler);
+    };
+    on = (name, handler) => {
+        this._events.on(name, handler);
     };
     emit = (name, e) => {
-        const listeners = this._events.get(name) || [];
-        for (const listener of listeners) {
-            listener(e);
-        }
+        this._events.emit(name, e);
     };
-    removeListener = (name, cb) => {
-        this._events.set(name, (this._events.get(name) || []).filter((listener) => listener !== cb));
+    removeListener = (name, handler) => {
+        this._events.removeListener(name, handler);
     };
     getState = (name) => {
         return this._state.get(name) || null;
@@ -211,11 +226,9 @@ class CanvasApp {
         window.addEventListener('resize', this.onWindowResize);
         this.onWindowResize();
         this._elementEventController.attachEvents(this);
-        this._requestFrameId = window.requestAnimationFrame(this.drawFrame);
     };
     detachEvents = () => {
         window.removeEventListener('resize', this.onWindowResize);
-        window.cancelAnimationFrame(this._requestFrameId);
         this._elementEventController.detachEvents(this);
     };
     onWindowResize = () => {
@@ -229,11 +242,12 @@ class CanvasApp {
         for (const component of components) {
             component.prepareFrame(this, timestamp);
         }
-        this._ctx.clearRect(0, 0, this.width, this.height);
+        // no need to clear rect if a background is always rendering on full screen
+        // this._ctx.clearRect(0, 0, this.width, this.height);
         for (const component of components) {
             component.drawFrame(this._ctx);
         }
-        this._requestFrameId = window.requestAnimationFrame(this.drawFrame);
+        window.requestAnimationFrame(this.drawFrame);
     };
     addScene = (sceneName, scene) => {
         for (const component of scene.components) {
@@ -251,8 +265,10 @@ class CanvasComponent {
     _children;
     _parent;
     _events;
+    _assets;
     constructor(id = '') {
-        this._events = new Map();
+        this._assets = {};
+        this._events = new EventEmitter();
         this._children = [];
         this._id = id;
         this._pos = {
@@ -264,10 +280,8 @@ class CanvasComponent {
             height: 0,
         };
         this._to = {
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
+            x: undefined,
+            y: undefined,
         };
     }
     get children() {
@@ -294,6 +308,9 @@ class CanvasComponent {
     get to() {
         return this._to;
     }
+    get assets() {
+        return this._assets;
+    }
     set x(value) {
         this._pos.x = value;
     }
@@ -309,24 +326,38 @@ class CanvasComponent {
     set parent(value) {
         this._parent = value;
     }
-    on = (name, cb) => {
-        const listeners = this._events.get(name);
-        if (listeners) {
-            listeners.push(cb);
-            return;
-        }
-        this._events.set(name, [cb]);
+    once = (name, handler) => {
+        this._events.once(name, handler);
+    };
+    on = (name, handler) => {
+        this._events.on(name, handler);
     };
     emit = (name, e) => {
-        const listeners = this._events.get(name) || [];
-        for (const listener of listeners) {
-            listener(e);
-        }
+        this._events.emit(name, e);
     };
-    removeListener = (name, cb) => {
-        this._events.set(name, (this._events.get(name) || []).filter((listener) => listener !== cb));
+    removeListener = (name, handler) => {
+        this._events.removeListener(name, handler);
     };
     prepareFrame = (app, timestamp) => {
+        if (this.to.x !== undefined || this.to.y !== undefined) {
+            if (this.to.x !== undefined) {
+                const newX = this.x + 1;
+                if ((newX >= this.x && this.x <= this.to.x) || (newX >= this.x && this.x >= this.to.x)) {
+                    this.x = this.to.x;
+                    this.to.x = undefined;
+                }
+            }
+            if (this.to.y !== undefined) {
+                const newY = this.y + 1;
+                if ((newY >= this.y && this.y <= this.to.y) || (newY >= this.y && this.y >= this.to.y)) {
+                    this.y = this.to.y;
+                    this.to.y = undefined;
+                }
+            }
+            if (this.to.x === undefined && this.to.y === undefined) {
+                this.emit('endMove', { app });
+            }
+        }
         if (this.prepare && this.prepare(app, timestamp))
             return;
         for (const child of this.children) {
@@ -345,9 +376,26 @@ class CanvasComponent {
             component.parent = this;
         }
     };
+    resizeCanvas = (app) => {
+        this.resize && this.resize(app);
+        for (const child of this.children) {
+            child.resizeCanvas(app);
+        }
+    };
+    moveTo = async (pos) => {
+        new Promise((resolve) => {
+            this.to.x = pos.x;
+            this.to.y = pos.y;
+            this.on('endMove', () => {
+                resolve(true);
+            });
+        });
+    };
     init;
     prepare;
     destroy;
+    loadAssets;
+    resize;
 }
 
 class CanvasScene {

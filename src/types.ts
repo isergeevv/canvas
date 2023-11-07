@@ -15,8 +15,6 @@ export interface S {
   h: number;
 }
 
-export type To = Position & Size;
-
 export type ElementEventHandler = (app: CanvasApp, event: Event) => void;
 
 export interface CanvasAppEvent {
@@ -30,11 +28,20 @@ export interface CanvasAppPointerEvent extends CanvasAppEvent {
   event: PointerEvent;
 }
 
-export type CanvasAppEvents = {
+export interface CanvasAppEvents {
   sceneChange: CanvasAppSwitchSceneEvent;
   pointerDown: CanvasAppPointerEvent;
   pointerMove: CanvasAppPointerEvent;
   pointerUp: CanvasAppPointerEvent;
-};
+  endMove: CanvasAppEvent;
+}
 
 export type CanvasAppEventHandler = <T extends keyof CanvasAppEvents>(e: CanvasAppEvents[T]) => void;
+
+export type Asset =
+  | HTMLCanvasElement
+  | HTMLImageElement
+  | HTMLVideoElement
+  | ImageBitmap
+  | OffscreenCanvas
+  | SVGImageElement;

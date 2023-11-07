@@ -1,10 +1,10 @@
+import EventEmitter from 'events';
 import { CanvasSceneController } from '../controllers';
 import ElementEventController from '../controllers/ElementEventController';
 import { CanvasAppEventHandler, CanvasAppEvents, Position } from '../types';
 import CanvasScene from './CanvasScene';
 
 export default class CanvasApp {
-  private _requestFrameId: number;
   private _ctx: CanvasRenderingContext2D;
   private _sceneController: CanvasSceneController;
   private _elementEventController: ElementEventController;
@@ -12,10 +12,10 @@ export default class CanvasApp {
   private _lastPointerPos: Position;
   private _data: any;
   private _state: Map<string, any>;
-  private _events: Map<string, CanvasAppEventHandler[]>;
+  private _events: EventEmitter;
 
   constructor(fill: boolean) {
-    this._events = new Map();
+    this._events = new EventEmitter();
     this._state = new Map();
 
     this._fill = fill;
@@ -93,6 +93,30 @@ export default class CanvasApp {
     this._data = value;
   }
 
+  loadAssets = async () => {
+    for (const scene of Object.values(this._sceneController.scenes)) {
+      for (const component of scene.components) {
+        console.log(component.id, component.loadAssets);
+        const assets: Record<string, string> = component.loadAssets && component.loadAssets();
+        if (!assets) continue;
+
+        const images = await Promise.all(
+          Object.keys(assets).map(
+            (key) =>
+              new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onerror = (e) => reject(`${assets[key]} failed to load`);
+                img.onload = (e) => resolve(img);
+                img.src = assets[key];
+              }),
+          ),
+        );
+
+        console.log(images);
+      }
+    }
+  };
+
   init = (ctx: CanvasRenderingContext2D, startScene?: string) => {
     this._ctx = ctx;
 
@@ -100,6 +124,10 @@ export default class CanvasApp {
     this._sceneController.initSceneComponents(this, this.currentScene.components);
 
     this._elementEventController.on('pointermove', this.onPointerMove);
+
+    window.requestAnimationFrame(this.drawFrame);
+
+    this.loadAssets();
   };
 
   private onPointerMove = (_: CanvasApp, e: PointerEvent) => {
@@ -107,33 +135,25 @@ export default class CanvasApp {
     this._lastPointerPos.y = e.offsetY;
   };
 
-  on = <T extends keyof CanvasAppEvents>(name: T, cb: CanvasAppEventHandler) => {
-    const listeners = this._events.get(name);
-    if (listeners) {
-      listeners.push(cb);
-      return;
-    }
-    this._events.set(name, [cb]);
+  once = <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => {
+    this._events.once(name, handler);
+  };
+
+  on = <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => {
+    this._events.on(name, handler);
   };
 
   emit = <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => {
-    const listeners = this._events.get(name) || [];
-    for (const listener of listeners) {
-      listener(e);
-    }
+    this._events.emit(name, e);
   };
 
-  removeListener = (name: string, cb: CanvasAppEventHandler) => {
-    this._events.set(
-      name,
-      (this._events.get(name) || []).filter((listener) => listener !== cb),
-    );
+  removeListener = (name: string, handler: CanvasAppEventHandler) => {
+    this._events.removeListener(name, handler);
   };
 
   getState = (name: string) => {
     return this._state.get(name) || null;
   };
-
   setState = (name: string, value: any) => {
     this._state.set(name, value);
   };
@@ -143,13 +163,10 @@ export default class CanvasApp {
     this.onWindowResize();
 
     this._elementEventController.attachEvents(this);
-
-    this._requestFrameId = window.requestAnimationFrame(this.drawFrame);
   };
 
   detachEvents = () => {
     window.removeEventListener('resize', this.onWindowResize);
-    window.cancelAnimationFrame(this._requestFrameId);
 
     this._elementEventController.detachEvents(this);
   };
@@ -168,12 +185,13 @@ export default class CanvasApp {
       component.prepareFrame(this, timestamp);
     }
 
-    this._ctx.clearRect(0, 0, this.width, this.height);
+    // no need to clear rect if a background is always rendering on full screen
+    // this._ctx.clearRect(0, 0, this.width, this.height);
     for (const component of components) {
       component.drawFrame(this._ctx);
     }
 
-    this._requestFrameId = window.requestAnimationFrame(this.drawFrame);
+    window.requestAnimationFrame(this.drawFrame);
   };
 
   addScene = (sceneName: string, scene: CanvasScene) => {

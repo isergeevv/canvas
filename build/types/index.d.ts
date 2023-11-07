@@ -10,7 +10,6 @@ interface S {
     w: number;
     h: number;
 }
-type To = Position & Size;
 type ElementEventHandler = (app: CanvasApp, event: Event) => void;
 interface CanvasAppEvent {
     app: CanvasApp;
@@ -22,13 +21,15 @@ interface CanvasAppSwitchSceneEvent extends CanvasAppEvent {
 interface CanvasAppPointerEvent extends CanvasAppEvent {
     event: PointerEvent;
 }
-type CanvasAppEvents = {
+interface CanvasAppEvents {
     sceneChange: CanvasAppSwitchSceneEvent;
     pointerDown: CanvasAppPointerEvent;
     pointerMove: CanvasAppPointerEvent;
     pointerUp: CanvasAppPointerEvent;
-};
+    endMove: CanvasAppEvent;
+}
 type CanvasAppEventHandler = <T extends keyof CanvasAppEvents>(e: CanvasAppEvents[T]) => void;
+type Asset = HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | ImageBitmap | OffscreenCanvas | SVGImageElement;
 
 declare class ElementEventController {
     private _eventListeners;
@@ -50,6 +51,7 @@ declare abstract class CanvasComponent {
     private _children;
     private _parent;
     private _events;
+    private _assets;
     constructor(id?: string);
     get children(): CanvasComponent[];
     get id(): string;
@@ -58,22 +60,28 @@ declare abstract class CanvasComponent {
     get width(): number;
     get height(): number;
     get parent(): CanvasComponent | CanvasApp;
-    get to(): To;
+    get to(): Position;
+    get assets(): Record<string, Asset>;
     set x(value: number);
     set y(value: number);
     set width(value: number);
     set height(value: number);
     set parent(value: CanvasComponent | CanvasApp);
-    on: <T extends keyof CanvasAppEvents>(name: T, cb: CanvasAppEventHandler) => void;
+    once: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
+    on: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
     emit: <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => void;
-    removeListener: (name: string, cb: CanvasAppEventHandler) => void;
+    removeListener: (name: string, handler: CanvasAppEventHandler) => void;
     prepareFrame: (app: CanvasApp, timestamp: number) => void;
     drawFrame: (ctx: CanvasRenderingContext2D) => void;
     addChild: (...components: CanvasComponent[]) => void;
+    resizeCanvas: (app: CanvasApp) => void;
+    moveTo: (pos: Partial<Position>) => Promise<void>;
     abstract draw(ctx: CanvasRenderingContext2D): void;
     init?: (app: CanvasApp) => void;
     prepare?: (app: CanvasApp, timestamp: number) => boolean | void;
     destroy?: (app: CanvasApp) => void;
+    loadAssets?: () => Record<string, string>;
+    resize?: (app: CanvasApp) => void;
 }
 
 declare class CanvasScene {
@@ -86,7 +94,6 @@ declare class CanvasScene {
 }
 
 declare class CanvasApp {
-    private _requestFrameId;
     private _ctx;
     private _sceneController;
     private _elementEventController;
@@ -112,11 +119,13 @@ declare class CanvasApp {
     set height(value: number);
     set currentSceneName(value: string);
     set data(value: any);
+    loadAssets: () => Promise<void>;
     init: (ctx: CanvasRenderingContext2D, startScene?: string) => void;
     private onPointerMove;
-    on: <T extends keyof CanvasAppEvents>(name: T, cb: CanvasAppEventHandler) => void;
+    once: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
+    on: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
     emit: <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => void;
-    removeListener: (name: string, cb: CanvasAppEventHandler) => void;
+    removeListener: (name: string, handler: CanvasAppEventHandler) => void;
     getState: (name: string) => any;
     setState: (name: string, value: any) => void;
     attachEvents: () => void;
@@ -140,4 +149,4 @@ declare class CanvasSceneController {
     addScene: (sceneName: string, scene: CanvasScene) => void;
 }
 
-export { CanvasApp, CanvasAppEvent, CanvasAppEventHandler, CanvasAppEvents, CanvasAppPointerEvent, CanvasAppSwitchSceneEvent, CanvasComponent, CanvasScene, CanvasSceneController, ElementEventHandler, Position, S, Size, To };
+export { Asset, CanvasApp, CanvasAppEvent, CanvasAppEventHandler, CanvasAppEvents, CanvasAppPointerEvent, CanvasAppSwitchSceneEvent, CanvasComponent, CanvasScene, CanvasSceneController, ElementEventHandler, Position, S, Size };
