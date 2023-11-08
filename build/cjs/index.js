@@ -102,30 +102,26 @@ class ElementEventController {
     _eventCallbacks;
     constructor() {
         this._eventListeners = {};
-        this._eventCallbacks = new Map();
+        this._eventCallbacks = new EventEmitter();
     }
-    on = (name, cb) => {
-        const callbacks = this._eventCallbacks.get(name);
-        if (callbacks) {
-            callbacks.push(cb);
-            return;
-        }
-        this._eventCallbacks.set(name, [cb]);
+    once = (name, handler) => {
+        this._eventCallbacks.once(name, handler);
     };
-    removeListener = (app, name, cb) => {
-        const callbacks = this._eventCallbacks.get(name);
-        if (!callbacks)
-            return;
-        this._eventCallbacks.set(name, callbacks.filter((l) => l !== cb));
-        this.reloadEvents(app);
+    on = (name, handler) => {
+        this._eventCallbacks.on(name, handler);
+    };
+    emit = (name, e) => {
+        this._eventCallbacks.emit(name, e);
+    };
+    removeListener = (name, handler) => {
+        this._eventCallbacks.removeListener(name, handler);
     };
     attachEvents = (app) => {
-        for (const event of this._eventCallbacks.keys()) {
-            const listeners = this._eventCallbacks.get(event);
+        for (const event of this._eventCallbacks.eventNames()) {
+            if (typeof event !== 'string')
+                continue;
             this._eventListeners[event] = (e) => {
-                for (const cb of listeners) {
-                    cb({ app, event: e });
-                }
+                this.emit(event, { app, event: e });
             };
             app.canvas.addEventListener(event, this._eventListeners[event]);
         }
@@ -135,10 +131,10 @@ class ElementEventController {
             app.canvas.removeEventListener(event, this._eventListeners[event]);
         }
         this._eventListeners = {};
-        this._eventCallbacks = new Map();
+        this._eventCallbacks.removeAllListeners();
     };
     resetEvents = () => {
-        this._eventCallbacks = new Map();
+        this._eventCallbacks.removeAllListeners();
     };
     reloadEvents = (app) => {
         this.detachEvents(app);

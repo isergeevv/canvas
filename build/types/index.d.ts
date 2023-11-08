@@ -39,8 +39,10 @@ declare class ElementEventController {
     private _eventListeners;
     private _eventCallbacks;
     constructor();
-    on: <T>(name: string, cb: CanvasElementEventHandler<T>) => void;
-    removeListener: <T>(app: CanvasApp, name: string, cb: CanvasElementEventHandler<T>) => void;
+    once: <T>(name: string, handler: CanvasElementEventHandler<T>) => void;
+    on: <T>(name: string, handler: CanvasElementEventHandler<T>) => void;
+    emit: <T>(name: string, e: CanvasElementEvent<T>) => void;
+    removeListener: <T>(name: string, handler: CanvasElementEventHandler<T>) => void;
     attachEvents: (app: CanvasApp) => void;
     detachEvents: (app: CanvasApp) => void;
     resetEvents: () => void;

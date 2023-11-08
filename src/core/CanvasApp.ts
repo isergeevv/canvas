@@ -153,7 +153,6 @@ export default class CanvasApp {
   emit = <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => {
     this._events.emit(name, e);
   };
-
   removeListener = (name: string, handler: CanvasAppEventHandler) => {
     this._events.removeListener(name, handler);
   };
