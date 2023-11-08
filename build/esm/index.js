@@ -140,11 +140,32 @@ class CanvasSceneController {
     };
 }
 
+class CanvasAssetsController {
+    loadAssets = async (sceneController) => {
+        for (const scene of Object.values(sceneController.scenes)) {
+            for (const component of scene.components) {
+                console.log(component.id, component.loadAssets);
+                const assets = component.loadAssets && component.loadAssets();
+                if (!assets)
+                    continue;
+                const images = await Promise.all(Object.keys(assets).map((key) => new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onerror = () => reject(`[CanvasAssetsController] ${assets[key]} failed to load`);
+                    img.onload = () => resolve(img);
+                    img.src = assets[key];
+                })));
+                console.log(images);
+            }
+        }
+    };
+}
+
 class CanvasApp {
     _ctx;
     _sceneController;
     _elementEventsController;
     _frameController;
+    _assetsController;
     _fill;
     _lastPointerPos;
     _data;
@@ -161,6 +182,7 @@ class CanvasApp {
         this._sceneController = new CanvasSceneController();
         this._elementEventsController = new CanvasElementEventsController();
         this._frameController = new CanvasFrameController(opt.maxFps);
+        this._assetsController = new CanvasAssetsController();
     }
     get x() {
         return 0;
@@ -226,30 +248,13 @@ class CanvasApp {
     set data(value) {
         this._data = value;
     }
-    loadAssets = async () => {
-        for (const scene of Object.values(this._sceneController.scenes)) {
-            for (const component of scene.components) {
-                console.log(component.id, component.loadAssets);
-                const assets = component.loadAssets && component.loadAssets();
-                if (!assets)
-                    continue;
-                const images = await Promise.all(Object.keys(assets).map((key) => new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.onerror = (e) => reject(`${assets[key]} failed to load`);
-                    img.onload = (e) => resolve(img);
-                    img.src = assets[key];
-                })));
-                console.log(images);
-            }
-        }
-    };
     init = (ctx, startScene) => {
         this._ctx = ctx;
         this._sceneController.init(startScene);
         this._sceneController.initSceneComponents(this, this.currentScene.components);
         this._elementEventsController.on('pointermove', this.onPointerMove);
         window.requestAnimationFrame(this.drawFrame);
-        this.loadAssets();
+        this._assetsController.loadAssets(this._sceneController);
     };
     onPointerMove = (e) => {
         this._lastPointerPos.x = e.event.offsetX;
@@ -474,4 +479,4 @@ class CanvasScene {
     };
 }
 
-export { CanvasApp, CanvasComponent, CanvasElementEventsController, CanvasFrameController, CanvasScene, CanvasSceneController };
+export { CanvasApp, CanvasAssetsController, CanvasComponent, CanvasElementEventsController, CanvasFrameController, CanvasScene, CanvasSceneController };

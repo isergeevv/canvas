@@ -105,6 +105,7 @@ declare class CanvasApp {
     private _sceneController;
     private _elementEventsController;
     private _frameController;
+    private _assetsController;
     private _fill;
     private _lastPointerPos;
     private _data;
@@ -129,7 +130,6 @@ declare class CanvasApp {
     set height(value: number);
     set currentSceneName(value: string);
     set data(value: any);
-    loadAssets: () => Promise<void>;
     init: (ctx: CanvasRenderingContext2D, startScene?: string) => void;
     private onPointerMove;
     once: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
@@ -173,4 +173,8 @@ declare class CanvasFrameController {
     addFrame: (timestamp: number) => boolean;
 }
 
-export { Asset, CanvasApp, CanvasAppEventHandler, CanvasAppEvents, CanvasAppOptions, CanvasAppSwitchSceneEvent, CanvasComponent, CanvasComponentEventHandler, CanvasElementEvent, CanvasElementEventHandler, CanvasElementEventsController, CanvasEvent, CanvasFrameController, CanvasScene, CanvasSceneController, Position, S, Size, To };
+declare class CanvasAssetsController {
+    loadAssets: (sceneController: CanvasSceneController) => Promise<void>;
+}
+
+export { Asset, CanvasApp, CanvasAppEventHandler, CanvasAppEvents, CanvasAppOptions, CanvasAppSwitchSceneEvent, CanvasAssetsController, CanvasComponent, CanvasComponentEventHandler, CanvasElementEvent, CanvasElementEventHandler, CanvasElementEventsController, CanvasEvent, CanvasFrameController, CanvasScene, CanvasSceneController, Position, S, Size, To };

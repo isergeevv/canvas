@@ -4,12 +4,14 @@ import CanvasScene from './CanvasScene';
 import CanvasElementEventsController from '../controllers/CanvasElementEventsController';
 import CanvasFrameController from '../controllers/CanvasFrameController';
 import CanvasSceneController from '../controllers/CanvasSceneController';
+import CanvasAssetsController from '../controllers/CanvasAssetsController';
 
 export default class CanvasApp {
   private _ctx: CanvasRenderingContext2D;
   private _sceneController: CanvasSceneController;
   private _elementEventsController: CanvasElementEventsController;
   private _frameController: CanvasFrameController;
+  private _assetsController: CanvasAssetsController;
   private _fill: boolean;
   private _lastPointerPos: Position;
   private _data: any;
@@ -29,6 +31,7 @@ export default class CanvasApp {
     this._sceneController = new CanvasSceneController();
     this._elementEventsController = new CanvasElementEventsController();
     this._frameController = new CanvasFrameController(opt.maxFps);
+    this._assetsController = new CanvasAssetsController();
   }
 
   get x() {
@@ -102,30 +105,6 @@ export default class CanvasApp {
     this._data = value;
   }
 
-  loadAssets = async () => {
-    for (const scene of Object.values(this._sceneController.scenes)) {
-      for (const component of scene.components) {
-        console.log(component.id, component.loadAssets);
-        const assets: Record<string, string> = component.loadAssets && component.loadAssets();
-        if (!assets) continue;
-
-        const images = await Promise.all(
-          Object.keys(assets).map(
-            (key) =>
-              new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onerror = (e) => reject(`${assets[key]} failed to load`);
-                img.onload = (e) => resolve(img);
-                img.src = assets[key];
-              }),
-          ),
-        );
-
-        console.log(images);
-      }
-    }
-  };
-
   init = (ctx: CanvasRenderingContext2D, startScene?: string) => {
     this._ctx = ctx;
 
@@ -136,7 +115,7 @@ export default class CanvasApp {
 
     window.requestAnimationFrame(this.drawFrame);
 
-    this.loadAssets();
+    this._assetsController.loadAssets(this._sceneController);
   };
 
   private onPointerMove = (e: CanvasElementEvent<PointerEvent>) => {
