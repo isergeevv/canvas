@@ -173,6 +173,7 @@ class CanvasApp {
     _data;
     _state;
     _events;
+    _windowResizeDebounce;
     constructor(opt) {
         this._events = new EventEmitter();
         this._state = new Map();
@@ -289,15 +290,6 @@ class CanvasApp {
         window.removeEventListener('resize', this.onWindowResize);
         this._elementEventsController.detachEvents(this);
     };
-    onWindowResize = () => {
-        if (!this._fill)
-            return;
-        this.width = window.innerWidth;
-        this.height = window.innerHeight;
-        for (const component of this._sceneController.currentScene.components) {
-            component.resizeCanvas(this);
-        }
-    };
     drawFrame = (timestamp) => {
         window.requestAnimationFrame(this.drawFrame);
         if (!this._frameController.addFrame(timestamp))
@@ -306,6 +298,24 @@ class CanvasApp {
     };
     addScene = (sceneName, scene) => {
         this._sceneController.addScene(this, sceneName, scene);
+    };
+    onWindowResize = (e) => {
+        if (!this._fill)
+            return;
+        const debounce = () => {
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+            for (const component of this._sceneController.currentScene.components) {
+                component.resizeCanvas(this);
+            }
+        };
+        if (!e) {
+            debounce();
+            return;
+        }
+        if (this._windowResizeDebounce)
+            clearTimeout(this._windowResizeDebounce);
+        this._windowResizeDebounce = setTimeout(debounce, 50);
     };
 }
 

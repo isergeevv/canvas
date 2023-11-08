@@ -111,6 +111,7 @@ declare class CanvasApp {
     private _data;
     private _state;
     private _events;
+    private _windowResizeDebounce;
     constructor(opt: CanvasAppOptions);
     get x(): number;
     get y(): number;
@@ -140,9 +141,9 @@ declare class CanvasApp {
     setState: (name: string, value: any) => void;
     attachEvents: () => void;
     detachEvents: () => void;
-    onWindowResize: () => void;
     drawFrame: (timestamp: number) => void;
     addScene: (sceneName: string, scene: CanvasScene) => void;
+    private onWindowResize;
 }
 
 declare class CanvasSceneController {

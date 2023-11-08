@@ -17,6 +17,7 @@ export default class CanvasApp {
   private _data: any;
   private _state: Map<string, any>;
   private _events: EventEmitter;
+  private _windowResizeDebounce: NodeJS.Timeout;
 
   constructor(opt: CanvasAppOptions) {
     this._events = new EventEmitter();
@@ -156,17 +157,6 @@ export default class CanvasApp {
     this._elementEventsController.detachEvents(this);
   };
 
-  onWindowResize = () => {
-    if (!this._fill) return;
-
-    this.width = window.innerWidth;
-    this.height = window.innerHeight;
-
-    for (const component of this._sceneController.currentScene.components) {
-      component.resizeCanvas(this);
-    }
-  };
-
   drawFrame = (timestamp: number) => {
     window.requestAnimationFrame(this.drawFrame);
 
@@ -177,5 +167,26 @@ export default class CanvasApp {
 
   addScene = (sceneName: string, scene: CanvasScene) => {
     this._sceneController.addScene(this, sceneName, scene);
+  };
+
+  private onWindowResize = (e?: UIEvent) => {
+    if (!this._fill) return;
+
+    const debounce = () => {
+      this.width = window.innerWidth;
+      this.height = window.innerHeight;
+
+      for (const component of this._sceneController.currentScene.components) {
+        component.resizeCanvas(this);
+      }
+    };
+
+    if (!e) {
+      debounce();
+      return;
+    }
+
+    if (this._windowResizeDebounce) clearTimeout(this._windowResizeDebounce);
+    this._windowResizeDebounce = setTimeout(debounce, 50);
   };
 }
