@@ -33,6 +33,7 @@ interface CanvasElementEvent<T> extends CanvasEvent {
     event: T;
 }
 type CanvasElementEventHandler<T> = (e: CanvasElementEvent<T>) => void;
+type CanvasComponentEventHandler = (e: CanvasEvent) => void;
 type Asset = HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | ImageBitmap | OffscreenCanvas | SVGImageElement;
 
 declare class ElementEventController {
@@ -73,11 +74,11 @@ declare abstract class CanvasComponent {
     set width(value: number);
     set height(value: number);
     set parent(value: CanvasComponent | CanvasApp);
-    once: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
-    on: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
-    emit: <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => void;
-    removeListener: (name: string, handler: CanvasAppEventHandler) => void;
-    prepareFrame: (app: any, timestamp: any) => void;
+    once: (name: string, handler: CanvasComponentEventHandler) => void;
+    on: (name: string, handler: CanvasComponentEventHandler) => void;
+    emit: (name: string, e: CanvasEvent) => void;
+    removeListener: (name: string, handler: CanvasComponentEventHandler) => void;
+    prepareFrame: (app: CanvasApp, timestamp: number) => void;
     drawFrame: (ctx: CanvasRenderingContext2D) => void;
     addChild: (...components: CanvasComponent[]) => void;
     resizeCanvas: (app: CanvasApp) => void;
@@ -172,4 +173,4 @@ declare class FrameController {
     addFrame: (timestamp: number) => boolean;
 }
 
-export { Asset, CanvasApp, CanvasAppEventHandler, CanvasAppEvents, CanvasAppOptions, CanvasAppSwitchSceneEvent, CanvasComponent, CanvasElementEvent, CanvasElementEventHandler, CanvasEvent, CanvasScene, ElementEventController as ElementEventsController, FrameController, Position, S, SceneController, Size, To };
+export { Asset, CanvasApp, CanvasAppEventHandler, CanvasAppEvents, CanvasAppOptions, CanvasAppSwitchSceneEvent, CanvasComponent, CanvasComponentEventHandler, CanvasElementEvent, CanvasElementEventHandler, CanvasEvent, CanvasScene, ElementEventController as ElementEventsController, FrameController, Position, S, SceneController, Size, To };

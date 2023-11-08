@@ -1,4 +1,4 @@
-import { Asset, CanvasAppEventHandler, CanvasAppEvents, Position, Size, To } from '../types';
+import { Asset, CanvasComponentEventHandler, CanvasEvent, Position, Size, To } from '../types';
 import CanvasApp from './CanvasApp';
 import EventEmitter from 'events';
 
@@ -79,23 +79,20 @@ export default abstract class CanvasComponent {
     this._parent = value;
   }
 
-  once = <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => {
+  once = (name: string, handler: CanvasComponentEventHandler) => {
     this._events.once(name, handler);
   };
-
-  on = <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => {
+  on = (name: string, handler: CanvasComponentEventHandler) => {
     this._events.on(name, handler);
   };
-
-  emit = <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => {
+  emit = (name: string, e: CanvasEvent) => {
     this._events.emit(name, e);
   };
-
-  removeListener = (name: string, handler: CanvasAppEventHandler) => {
+  removeListener = (name: string, handler: CanvasComponentEventHandler) => {
     this._events.removeListener(name, handler);
   };
 
-  prepareFrame = (app, timestamp) => {
+  prepareFrame = (app: CanvasApp, timestamp: number) => {
     if (this.to.x !== undefined || this.to.y !== undefined) {
       if (this.to.x !== undefined) {
         let newX = this.x + this.to.step.x;

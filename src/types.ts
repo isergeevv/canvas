@@ -46,6 +46,8 @@ export interface CanvasElementEvent<T> extends CanvasEvent {
 
 export type CanvasElementEventHandler<T> = (e: CanvasElementEvent<T>) => void;
 
+export type CanvasComponentEventHandler = (e: CanvasEvent) => void;
+
 export type Asset =
   | HTMLCanvasElement
   | HTMLImageElement
