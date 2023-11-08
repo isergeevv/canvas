@@ -1,15 +1,15 @@
 import EventEmitter from 'events';
-import { SceneController } from '../controllers';
-import ElementEventsController from '../controllers/ElementEventsController';
 import { CanvasAppEventHandler, CanvasAppEvents, CanvasAppOptions, CanvasElementEvent, Position } from '../types';
 import CanvasScene from './CanvasScene';
-import FrameController from '../controllers/FrameController';
+import CanvasElementEventsController from '../controllers/CanvasElementEventsController';
+import CanvasFrameController from '../controllers/CanvasFrameController';
+import CanvasSceneController from '../controllers/CanvasSceneController';
 
 export default class CanvasApp {
   private _ctx: CanvasRenderingContext2D;
-  private _sceneController: SceneController;
-  private _elementEventsController: ElementEventsController;
-  private _frameController: FrameController;
+  private _sceneController: CanvasSceneController;
+  private _elementEventsController: CanvasElementEventsController;
+  private _frameController: CanvasFrameController;
   private _fill: boolean;
   private _lastPointerPos: Position;
   private _data: any;
@@ -26,9 +26,9 @@ export default class CanvasApp {
       y: 0,
     };
 
-    this._sceneController = new SceneController();
-    this._elementEventsController = new ElementEventsController();
-    this._frameController = new FrameController(opt.maxFps);
+    this._sceneController = new CanvasSceneController();
+    this._elementEventsController = new CanvasElementEventsController();
+    this._frameController = new CanvasFrameController(opt.maxFps);
   }
 
   get x() {

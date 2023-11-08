@@ -36,20 +36,6 @@ type CanvasElementEventHandler<T> = (e: CanvasElementEvent<T>) => void;
 type CanvasComponentEventHandler = (e: CanvasEvent) => void;
 type Asset = HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | ImageBitmap | OffscreenCanvas | SVGImageElement;
 
-declare class ElementEventController {
-    private _eventListeners;
-    private _eventCallbacks;
-    constructor();
-    once: <T>(name: string, handler: CanvasElementEventHandler<T>) => void;
-    on: <T>(name: string, handler: CanvasElementEventHandler<T>) => void;
-    emit: <T>(name: string, e: CanvasElementEvent<T>) => void;
-    removeListener: <T>(name: string, handler: CanvasElementEventHandler<T>) => void;
-    attachEvents: (app: CanvasApp) => void;
-    detachEvents: (app: CanvasApp) => void;
-    resetEvents: () => void;
-    reloadEvents: (app: CanvasApp) => void;
-}
-
 declare abstract class CanvasComponent {
     private _pos;
     private _size;
@@ -100,6 +86,20 @@ declare class CanvasScene {
     addComponent: (component: CanvasComponent) => void;
 }
 
+declare class CanvasElementEventsController {
+    private _eventListeners;
+    private _eventCallbacks;
+    constructor();
+    once: <T>(name: string, handler: CanvasElementEventHandler<T>) => void;
+    on: <T>(name: string, handler: CanvasElementEventHandler<T>) => void;
+    emit: <T>(name: string, e: CanvasElementEvent<T>) => void;
+    removeListener: <T>(name: string, handler: CanvasElementEventHandler<T>) => void;
+    attachEvents: (app: CanvasApp) => void;
+    detachEvents: (app: CanvasApp) => void;
+    resetEvents: () => void;
+    reloadEvents: (app: CanvasApp) => void;
+}
+
 declare class CanvasApp {
     private _ctx;
     private _sceneController;
@@ -118,7 +118,7 @@ declare class CanvasApp {
     get scenes(): Record<string, CanvasScene>;
     get ctx(): CanvasRenderingContext2D;
     get canvas(): HTMLCanvasElement;
-    get canvasEvents(): ElementEventController;
+    get canvasEvents(): CanvasElementEventsController;
     get width(): number;
     get height(): number;
     get lastPointerPos(): Position;
@@ -145,7 +145,7 @@ declare class CanvasApp {
     addScene: (sceneName: string, scene: CanvasScene) => void;
 }
 
-declare class SceneController {
+declare class CanvasSceneController {
     private _scenes;
     private _currentSceneName;
     constructor();
@@ -160,7 +160,7 @@ declare class SceneController {
     drawScene: (app: CanvasApp, timestamp: number) => void;
 }
 
-declare class FrameController {
+declare class CanvasFrameController {
     private _maxFps;
     private _frames;
     private _lastFrameTime;
@@ -173,4 +173,4 @@ declare class FrameController {
     addFrame: (timestamp: number) => boolean;
 }
 
-export { Asset, CanvasApp, CanvasAppEventHandler, CanvasAppEvents, CanvasAppOptions, CanvasAppSwitchSceneEvent, CanvasComponent, CanvasComponentEventHandler, CanvasElementEvent, CanvasElementEventHandler, CanvasEvent, CanvasScene, ElementEventController as ElementEventsController, FrameController, Position, S, SceneController, Size, To };
+export { Asset, CanvasApp, CanvasAppEventHandler, CanvasAppEvents, CanvasAppOptions, CanvasAppSwitchSceneEvent, CanvasComponent, CanvasComponentEventHandler, CanvasElementEvent, CanvasElementEventHandler, CanvasElementEventsController, CanvasEvent, CanvasFrameController, CanvasScene, CanvasSceneController, Position, S, Size, To };

@@ -2,7 +2,7 @@ import EventEmitter from 'events';
 import { CanvasApp } from '../core';
 import { CanvasElementEvent, CanvasElementEventHandler } from '../types';
 
-export default class ElementEventController {
+export default class CanvasElementEventsController {
   private _eventListeners: Record<string, EventListener>;
   private _eventCallbacks: EventEmitter;
 

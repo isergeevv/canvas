@@ -1,7 +1,7 @@
 import { CanvasApp, CanvasComponent } from '../core';
 import CanvasScene from '../core/CanvasScene';
 
-export default class SceneController {
+export default class CanvasSceneController {
   private _scenes: Record<string, CanvasScene>;
   private _currentSceneName: string;
 

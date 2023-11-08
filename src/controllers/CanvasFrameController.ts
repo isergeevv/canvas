@@ -1,4 +1,4 @@
-export default class FrameController {
+export default class CanvasFrameController {
   private _maxFps: number;
   private _frames: number;
   private _lastFrameTime: number;

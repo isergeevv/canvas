@@ -2,7 +2,90 @@
 
 var EventEmitter = require('events');
 
-class SceneController {
+class CanvasElementEventsController {
+    _eventListeners;
+    _eventCallbacks;
+    constructor() {
+        this._eventListeners = {};
+        this._eventCallbacks = new EventEmitter();
+    }
+    once = (name, handler) => {
+        this._eventCallbacks.once(name, handler);
+    };
+    on = (name, handler) => {
+        this._eventCallbacks.on(name, handler);
+    };
+    emit = (name, e) => {
+        this._eventCallbacks.emit(name, e);
+    };
+    removeListener = (name, handler) => {
+        this._eventCallbacks.removeListener(name, handler);
+    };
+    attachEvents = (app) => {
+        for (const event of this._eventCallbacks.eventNames()) {
+            if (typeof event !== 'string')
+                continue;
+            this._eventListeners[event] = (e) => {
+                this.emit(event, { app, event: e });
+            };
+            app.canvas.addEventListener(event, this._eventListeners[event]);
+        }
+    };
+    detachEvents = (app) => {
+        for (const event of Object.keys(this._eventListeners)) {
+            app.canvas.removeEventListener(event, this._eventListeners[event]);
+        }
+        this._eventListeners = {};
+        this._eventCallbacks.removeAllListeners();
+    };
+    resetEvents = () => {
+        this._eventCallbacks.removeAllListeners();
+    };
+    reloadEvents = (app) => {
+        this.detachEvents(app);
+        this.attachEvents(app);
+    };
+}
+
+class CanvasFrameController {
+    _maxFps;
+    _frames;
+    _lastFrameTime;
+    _lastCalculateFrameTime;
+    _currentFps;
+    _fpsInterval;
+    constructor(maxFps) {
+        this._maxFps = maxFps;
+        this._fpsInterval = maxFps ? 1000 / maxFps : 0;
+        this._frames = 0;
+        this._lastFrameTime = 0;
+        this._lastCalculateFrameTime = 0;
+        this._currentFps = 0;
+    }
+    get currentFps() {
+        return this._currentFps;
+    }
+    get maxFps() {
+        return this._maxFps;
+    }
+    addFrame = (timestamp) => {
+        if (this._fpsInterval > 0) {
+            const elapsed = timestamp - this._lastFrameTime;
+            if (elapsed < this._fpsInterval)
+                return false;
+            this._lastFrameTime = timestamp;
+        }
+        if (timestamp > this._lastCalculateFrameTime + 1000) {
+            this._currentFps = this._frames;
+            this._frames = 0;
+            this._lastCalculateFrameTime = timestamp;
+        }
+        this._frames++;
+        return true;
+    };
+}
+
+class CanvasSceneController {
     _scenes;
     _currentSceneName;
     constructor() {
@@ -59,89 +142,6 @@ class SceneController {
     };
 }
 
-class FrameController {
-    _maxFps;
-    _frames;
-    _lastFrameTime;
-    _lastCalculateFrameTime;
-    _currentFps;
-    _fpsInterval;
-    constructor(maxFps) {
-        this._maxFps = maxFps;
-        this._fpsInterval = maxFps ? 1000 / maxFps : 0;
-        this._frames = 0;
-        this._lastFrameTime = 0;
-        this._lastCalculateFrameTime = 0;
-        this._currentFps = 0;
-    }
-    get currentFps() {
-        return this._currentFps;
-    }
-    get maxFps() {
-        return this._maxFps;
-    }
-    addFrame = (timestamp) => {
-        if (this._fpsInterval > 0) {
-            const elapsed = timestamp - this._lastFrameTime;
-            if (elapsed < this._fpsInterval)
-                return false;
-            this._lastFrameTime = timestamp;
-        }
-        if (timestamp > this._lastCalculateFrameTime + 1000) {
-            this._currentFps = this._frames;
-            this._frames = 0;
-            this._lastCalculateFrameTime = timestamp;
-        }
-        this._frames++;
-        return true;
-    };
-}
-
-class ElementEventController {
-    _eventListeners;
-    _eventCallbacks;
-    constructor() {
-        this._eventListeners = {};
-        this._eventCallbacks = new EventEmitter();
-    }
-    once = (name, handler) => {
-        this._eventCallbacks.once(name, handler);
-    };
-    on = (name, handler) => {
-        this._eventCallbacks.on(name, handler);
-    };
-    emit = (name, e) => {
-        this._eventCallbacks.emit(name, e);
-    };
-    removeListener = (name, handler) => {
-        this._eventCallbacks.removeListener(name, handler);
-    };
-    attachEvents = (app) => {
-        for (const event of this._eventCallbacks.eventNames()) {
-            if (typeof event !== 'string')
-                continue;
-            this._eventListeners[event] = (e) => {
-                this.emit(event, { app, event: e });
-            };
-            app.canvas.addEventListener(event, this._eventListeners[event]);
-        }
-    };
-    detachEvents = (app) => {
-        for (const event of Object.keys(this._eventListeners)) {
-            app.canvas.removeEventListener(event, this._eventListeners[event]);
-        }
-        this._eventListeners = {};
-        this._eventCallbacks.removeAllListeners();
-    };
-    resetEvents = () => {
-        this._eventCallbacks.removeAllListeners();
-    };
-    reloadEvents = (app) => {
-        this.detachEvents(app);
-        this.attachEvents(app);
-    };
-}
-
 class CanvasApp {
     _ctx;
     _sceneController;
@@ -160,9 +160,9 @@ class CanvasApp {
             x: 0,
             y: 0,
         };
-        this._sceneController = new SceneController();
-        this._elementEventsController = new ElementEventController();
-        this._frameController = new FrameController(opt.maxFps);
+        this._sceneController = new CanvasSceneController();
+        this._elementEventsController = new CanvasElementEventsController();
+        this._frameController = new CanvasFrameController(opt.maxFps);
     }
     get x() {
         return 0;
@@ -478,7 +478,7 @@ class CanvasScene {
 
 exports.CanvasApp = CanvasApp;
 exports.CanvasComponent = CanvasComponent;
+exports.CanvasElementEventsController = CanvasElementEventsController;
+exports.CanvasFrameController = CanvasFrameController;
 exports.CanvasScene = CanvasScene;
-exports.ElementEventsController = ElementEventController;
-exports.FrameController = FrameController;
-exports.SceneController = SceneController;
+exports.CanvasSceneController = CanvasSceneController;
