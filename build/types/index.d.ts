@@ -1,3 +1,7 @@
+interface CanvasAppOptions {
+    fill: boolean;
+    maxFps: number;
+}
 interface Position {
     x: number;
     y: number;
@@ -10,33 +14,33 @@ interface S {
     w: number;
     h: number;
 }
-type ElementEventHandler = (app: CanvasApp, event: Event) => void;
-interface CanvasAppEvent {
+type To = Position & {
+    step: Position;
+};
+interface CanvasEvent {
     app: CanvasApp;
 }
-interface CanvasAppSwitchSceneEvent extends CanvasAppEvent {
+interface CanvasAppSwitchSceneEvent extends CanvasEvent {
     previous: string;
     current: string;
 }
-interface CanvasAppPointerEvent extends CanvasAppEvent {
-    event: PointerEvent;
-}
 interface CanvasAppEvents {
     sceneChange: CanvasAppSwitchSceneEvent;
-    pointerDown: CanvasAppPointerEvent;
-    pointerMove: CanvasAppPointerEvent;
-    pointerUp: CanvasAppPointerEvent;
-    endMove: CanvasAppEvent;
+    endMove: CanvasEvent;
 }
 type CanvasAppEventHandler = <T extends keyof CanvasAppEvents>(e: CanvasAppEvents[T]) => void;
+interface CanvasElementEvent<T> extends CanvasEvent {
+    event: T;
+}
+type CanvasElementEventHandler<T> = (e: CanvasElementEvent<T>) => void;
 type Asset = HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | ImageBitmap | OffscreenCanvas | SVGImageElement;
 
 declare class ElementEventController {
     private _eventListeners;
     private _eventCallbacks;
     constructor();
-    on: (name: string, cb: ElementEventHandler) => void;
-    removeListener: (app: CanvasApp, name: string, cb: ElementEventHandler) => void;
+    on: <T>(name: string, cb: CanvasElementEventHandler<T>) => void;
+    removeListener: <T>(app: CanvasApp, name: string, cb: CanvasElementEventHandler<T>) => void;
     attachEvents: (app: CanvasApp) => void;
     detachEvents: (app: CanvasApp) => void;
     resetEvents: () => void;
@@ -60,7 +64,7 @@ declare abstract class CanvasComponent {
     get width(): number;
     get height(): number;
     get parent(): CanvasComponent | CanvasApp;
-    get to(): Position;
+    get to(): To;
     get assets(): Record<string, Asset>;
     set x(value: number);
     set y(value: number);
@@ -71,11 +75,11 @@ declare abstract class CanvasComponent {
     on: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
     emit: <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => void;
     removeListener: (name: string, handler: CanvasAppEventHandler) => void;
-    prepareFrame: (app: CanvasApp, timestamp: number) => void;
+    prepareFrame: (app: any, timestamp: any) => void;
     drawFrame: (ctx: CanvasRenderingContext2D) => void;
     addChild: (...components: CanvasComponent[]) => void;
     resizeCanvas: (app: CanvasApp) => void;
-    moveTo: (pos: Partial<Position>) => Promise<void>;
+    moveTo: (app: CanvasApp, pos: Partial<Position>, ms: number) => Promise<unknown>;
     abstract draw(ctx: CanvasRenderingContext2D): void;
     init?: (app: CanvasApp) => void;
     prepare?: (app: CanvasApp, timestamp: number) => boolean | void;
@@ -96,13 +100,14 @@ declare class CanvasScene {
 declare class CanvasApp {
     private _ctx;
     private _sceneController;
-    private _elementEventController;
+    private _elementEventsController;
+    private _frameController;
     private _fill;
     private _lastPointerPos;
     private _data;
     private _state;
     private _events;
-    constructor(fill: boolean);
+    constructor(opt: CanvasAppOptions);
     get x(): number;
     get y(): number;
     get currentScene(): CanvasScene;
@@ -115,6 +120,8 @@ declare class CanvasApp {
     get height(): number;
     get lastPointerPos(): Position;
     get data(): any;
+    get fps(): number;
+    get maxFps(): number;
     set width(value: number);
     set height(value: number);
     set currentSceneName(value: string);
@@ -135,7 +142,7 @@ declare class CanvasApp {
     addScene: (sceneName: string, scene: CanvasScene) => void;
 }
 
-declare class CanvasSceneController {
+declare class SceneController {
     private _scenes;
     private _currentSceneName;
     constructor();
@@ -146,7 +153,21 @@ declare class CanvasSceneController {
     init: (startScene?: string) => void;
     initSceneComponents: (app: CanvasApp, components: CanvasComponent[]) => void;
     setScene: (newSceneName: string) => void;
-    addScene: (sceneName: string, scene: CanvasScene) => void;
+    addScene: (app: CanvasApp, sceneName: string, scene: CanvasScene) => void;
+    drawScene: (app: CanvasApp, timestamp: number) => void;
 }
 
-export { Asset, CanvasApp, CanvasAppEvent, CanvasAppEventHandler, CanvasAppEvents, CanvasAppPointerEvent, CanvasAppSwitchSceneEvent, CanvasComponent, CanvasScene, CanvasSceneController, ElementEventHandler, Position, S, Size };
+declare class FrameController {
+    private _maxFps;
+    private _frames;
+    private _lastFrameTime;
+    private _lastCalculateFrameTime;
+    private _currentFps;
+    private _fpsInterval;
+    constructor(maxFps: number);
+    get currentFps(): number;
+    get maxFps(): number;
+    addFrame: (timestamp: number) => boolean;
+}
+
+export { Asset, CanvasApp, CanvasAppEventHandler, CanvasAppEvents, CanvasAppOptions, CanvasAppSwitchSceneEvent, CanvasComponent, CanvasElementEvent, CanvasElementEventHandler, CanvasEvent, CanvasScene, ElementEventController as ElementEventsController, FrameController, Position, S, SceneController, Size, To };

@@ -1,5 +1,10 @@
 import { CanvasApp } from './core';
 
+export interface CanvasAppOptions {
+  fill: boolean;
+  maxFps: number;
+}
+
 export interface Position {
   x: number;
   y: number;
@@ -15,28 +20,31 @@ export interface S {
   h: number;
 }
 
-export type ElementEventHandler = (app: CanvasApp, event: Event) => void;
+export type To = Position & {
+  step: Position;
+};
 
-export interface CanvasAppEvent {
+export interface CanvasEvent {
   app: CanvasApp;
 }
-export interface CanvasAppSwitchSceneEvent extends CanvasAppEvent {
+
+export interface CanvasAppSwitchSceneEvent extends CanvasEvent {
   previous: string;
   current: string;
-}
-export interface CanvasAppPointerEvent extends CanvasAppEvent {
-  event: PointerEvent;
 }
 
 export interface CanvasAppEvents {
   sceneChange: CanvasAppSwitchSceneEvent;
-  pointerDown: CanvasAppPointerEvent;
-  pointerMove: CanvasAppPointerEvent;
-  pointerUp: CanvasAppPointerEvent;
-  endMove: CanvasAppEvent;
+  endMove: CanvasEvent;
 }
 
 export type CanvasAppEventHandler = <T extends keyof CanvasAppEvents>(e: CanvasAppEvents[T]) => void;
+
+export interface CanvasElementEvent<T> extends CanvasEvent {
+  event: T;
+}
+
+export type CanvasElementEventHandler<T> = (e: CanvasElementEvent<T>) => void;
 
 export type Asset =
   | HTMLCanvasElement

@@ -1,11 +1,11 @@
-import { Asset, CanvasAppEventHandler, CanvasAppEvents, Position, Size } from '../types';
+import { Asset, CanvasAppEventHandler, CanvasAppEvents, Position, Size, To } from '../types';
 import CanvasApp from './CanvasApp';
 import EventEmitter from 'events';
 
 export default abstract class CanvasComponent {
   private _pos: Position;
   private _size: Size;
-  private _to: Position;
+  private _to: To;
   private _id: string;
   private _children: CanvasComponent[];
   private _parent: CanvasComponent | CanvasApp;
@@ -28,6 +28,10 @@ export default abstract class CanvasComponent {
     this._to = {
       x: undefined,
       y: undefined,
+      step: {
+        x: undefined,
+        y: undefined,
+      },
     };
   }
 
@@ -91,29 +95,29 @@ export default abstract class CanvasComponent {
     this._events.removeListener(name, handler);
   };
 
-  prepareFrame = (app: CanvasApp, timestamp: number) => {
+  prepareFrame = (app, timestamp) => {
     if (this.to.x !== undefined || this.to.y !== undefined) {
       if (this.to.x !== undefined) {
-        const newX = this.x + 1;
-        if ((newX >= this.x && this.x <= this.to.x) || (newX >= this.x && this.x >= this.to.x)) {
-          this.x = this.to.x;
+        let newX = this.x + this.to.step.x;
+        if ((newX >= this.to.x && this.x >= this.to.x) || (newX >= this.to.x && this.x <= this.to.x)) {
+          newX = this.to.x;
           this.to.x = undefined;
         }
+        this.x = newX;
       }
       if (this.to.y !== undefined) {
-        const newY = this.y + 1;
-        if ((newY >= this.y && this.y <= this.to.y) || (newY >= this.y && this.y >= this.to.y)) {
-          this.y = this.to.y;
+        let newY = this.y + this.to.step.y;
+        if ((newY >= this.to.y && this.y >= this.to.y) || (newY >= this.to.y && this.y <= this.to.y)) {
+          newY = this.to.y;
           this.to.y = undefined;
         }
+        this.y = newY;
       }
       if (this.to.x === undefined && this.to.y === undefined) {
         this.emit('endMove', { app });
       }
     }
-
     if (this.prepare && this.prepare(app, timestamp)) return;
-
     for (const child of this.children) {
       child.prepareFrame(app, timestamp);
     }
@@ -140,12 +144,15 @@ export default abstract class CanvasComponent {
     }
   };
 
-  moveTo = async (pos: Partial<Position>) => {
-    new Promise((resolve) => {
+  moveTo = async (app: CanvasApp, pos: Partial<Position>, ms: number) => {
+    return new Promise((resolve) => {
       this.to.x = pos.x;
       this.to.y = pos.y;
-
-      this.on('endMove', () => {
+      this.to.step = {
+        x: (this.to.x - this.x) / (app.maxFps * (ms / 1000)),
+        y: (this.to.y - this.y) / (app.maxFps * (ms / 1000)),
+      };
+      this.once('endMove', () => {
         resolve(true);
       });
     });

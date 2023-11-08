@@ -2,7 +2,7 @@
 
 var EventEmitter = require('events');
 
-class CanvasSceneController {
+class SceneController {
     _scenes;
     _currentSceneName;
     constructor() {
@@ -43,8 +43,57 @@ class CanvasSceneController {
         }
         this._currentSceneName = newSceneName;
     };
-    addScene = (sceneName, scene) => {
+    addScene = (app, sceneName, scene) => {
+        for (const component of scene.components) {
+            component.parent = app;
+        }
         this._scenes[sceneName] = scene;
+    };
+    drawScene = (app, timestamp) => {
+        for (const component of this._scenes[this._currentSceneName].components) {
+            component.prepareFrame(app, timestamp);
+        }
+        for (const component of this._scenes[this._currentSceneName].components) {
+            component.drawFrame(app.ctx);
+        }
+    };
+}
+
+class FrameController {
+    _maxFps;
+    _frames;
+    _lastFrameTime;
+    _lastCalculateFrameTime;
+    _currentFps;
+    _fpsInterval;
+    constructor(maxFps) {
+        this._maxFps = maxFps;
+        this._fpsInterval = maxFps ? 1000 / maxFps : 0;
+        this._frames = 0;
+        this._lastFrameTime = 0;
+        this._lastCalculateFrameTime = 0;
+        this._currentFps = 0;
+    }
+    get currentFps() {
+        return this._currentFps;
+    }
+    get maxFps() {
+        return this._maxFps;
+    }
+    addFrame = (timestamp) => {
+        if (this._fpsInterval > 0) {
+            const elapsed = timestamp - this._lastFrameTime;
+            if (elapsed < this._fpsInterval)
+                return false;
+            this._lastFrameTime = timestamp;
+        }
+        if (timestamp > this._lastCalculateFrameTime + 1000) {
+            this._currentFps = this._frames;
+            this._frames = 0;
+            this._lastCalculateFrameTime = timestamp;
+        }
+        this._frames++;
+        return true;
     };
 }
 
@@ -75,7 +124,7 @@ class ElementEventController {
             const listeners = this._eventCallbacks.get(event);
             this._eventListeners[event] = (e) => {
                 for (const cb of listeners) {
-                    cb(app, e);
+                    cb({ app, event: e });
                 }
             };
             app.canvas.addEventListener(event, this._eventListeners[event]);
@@ -100,22 +149,24 @@ class ElementEventController {
 class CanvasApp {
     _ctx;
     _sceneController;
-    _elementEventController;
+    _elementEventsController;
+    _frameController;
     _fill;
     _lastPointerPos;
     _data;
     _state;
     _events;
-    constructor(fill) {
+    constructor(opt) {
         this._events = new EventEmitter();
         this._state = new Map();
-        this._fill = fill;
+        this._fill = opt.fill;
         this._lastPointerPos = {
             x: 0,
             y: 0,
         };
-        this._sceneController = new CanvasSceneController();
-        this._elementEventController = new ElementEventController();
+        this._sceneController = new SceneController();
+        this._elementEventsController = new ElementEventController();
+        this._frameController = new FrameController(opt.maxFps);
     }
     get x() {
         return 0;
@@ -139,7 +190,7 @@ class CanvasApp {
         return this._ctx.canvas;
     }
     get canvasEvents() {
-        return this._elementEventController;
+        return this._elementEventsController;
     }
     get width() {
         return this._ctx.canvas.width;
@@ -153,6 +204,12 @@ class CanvasApp {
     get data() {
         return this._data;
     }
+    get fps() {
+        return this._frameController.currentFps;
+    }
+    get maxFps() {
+        return this._frameController.maxFps;
+    }
     set width(value) {
         this._ctx.canvas.width = value;
     }
@@ -160,12 +217,12 @@ class CanvasApp {
         this._ctx.canvas.height = value;
     }
     set currentSceneName(value) {
-        this._elementEventController.resetEvents();
+        this._elementEventsController.resetEvents();
         const oldSceneName = this._sceneController.currentSceneName;
         this._sceneController.destroySceneComponents(this, this.currentScene.components);
         this._sceneController.setScene(value);
         this._sceneController.currentScene.init(this);
-        this._elementEventController.reloadEvents(this);
+        this._elementEventsController.reloadEvents(this);
         this.emit('sceneChange', {
             app: this,
             previous: oldSceneName,
@@ -196,13 +253,13 @@ class CanvasApp {
         this._ctx = ctx;
         this._sceneController.init(startScene);
         this._sceneController.initSceneComponents(this, this.currentScene.components);
-        this._elementEventController.on('pointermove', this.onPointerMove);
+        this._elementEventsController.on('pointermove', this.onPointerMove);
         window.requestAnimationFrame(this.drawFrame);
         this.loadAssets();
     };
-    onPointerMove = (_, e) => {
-        this._lastPointerPos.x = e.offsetX;
-        this._lastPointerPos.y = e.offsetY;
+    onPointerMove = (e) => {
+        this._lastPointerPos.x = e.event.offsetX;
+        this._lastPointerPos.y = e.event.offsetY;
     };
     once = (name, handler) => {
         this._events.once(name, handler);
@@ -225,35 +282,29 @@ class CanvasApp {
     attachEvents = () => {
         window.addEventListener('resize', this.onWindowResize);
         this.onWindowResize();
-        this._elementEventController.attachEvents(this);
+        this._elementEventsController.attachEvents(this);
     };
     detachEvents = () => {
         window.removeEventListener('resize', this.onWindowResize);
-        this._elementEventController.detachEvents(this);
+        this._elementEventsController.detachEvents(this);
     };
     onWindowResize = () => {
         if (!this._fill)
             return;
         this.width = window.innerWidth;
         this.height = window.innerHeight;
+        for (const component of this._sceneController.currentScene.components) {
+            component.resizeCanvas(this);
+        }
     };
     drawFrame = (timestamp) => {
-        const components = this.currentScene.components;
-        for (const component of components) {
-            component.prepareFrame(this, timestamp);
-        }
-        // no need to clear rect if a background is always rendering on full screen
-        // this._ctx.clearRect(0, 0, this.width, this.height);
-        for (const component of components) {
-            component.drawFrame(this._ctx);
-        }
         window.requestAnimationFrame(this.drawFrame);
+        if (!this._frameController.addFrame(timestamp))
+            return;
+        this._sceneController.drawScene(this, timestamp);
     };
     addScene = (sceneName, scene) => {
-        for (const component of scene.components) {
-            component.parent = this;
-        }
-        this._sceneController.addScene(sceneName, scene);
+        this._sceneController.addScene(this, sceneName, scene);
     };
 }
 
@@ -282,6 +333,10 @@ class CanvasComponent {
         this._to = {
             x: undefined,
             y: undefined,
+            step: {
+                x: undefined,
+                y: undefined,
+            },
         };
     }
     get children() {
@@ -341,18 +396,20 @@ class CanvasComponent {
     prepareFrame = (app, timestamp) => {
         if (this.to.x !== undefined || this.to.y !== undefined) {
             if (this.to.x !== undefined) {
-                const newX = this.x + 1;
-                if ((newX >= this.x && this.x <= this.to.x) || (newX >= this.x && this.x >= this.to.x)) {
-                    this.x = this.to.x;
+                let newX = this.x + this.to.step.x;
+                if ((newX >= this.to.x && this.x >= this.to.x) || (newX >= this.to.x && this.x <= this.to.x)) {
+                    newX = this.to.x;
                     this.to.x = undefined;
                 }
+                this.x = newX;
             }
             if (this.to.y !== undefined) {
-                const newY = this.y + 1;
-                if ((newY >= this.y && this.y <= this.to.y) || (newY >= this.y && this.y >= this.to.y)) {
-                    this.y = this.to.y;
+                let newY = this.y + this.to.step.y;
+                if ((newY >= this.to.y && this.y >= this.to.y) || (newY >= this.to.y && this.y <= this.to.y)) {
+                    newY = this.to.y;
                     this.to.y = undefined;
                 }
+                this.y = newY;
             }
             if (this.to.x === undefined && this.to.y === undefined) {
                 this.emit('endMove', { app });
@@ -382,11 +439,15 @@ class CanvasComponent {
             child.resizeCanvas(app);
         }
     };
-    moveTo = async (pos) => {
-        new Promise((resolve) => {
+    moveTo = async (app, pos, ms) => {
+        return new Promise((resolve) => {
             this.to.x = pos.x;
             this.to.y = pos.y;
-            this.on('endMove', () => {
+            this.to.step = {
+                x: (this.to.x - this.x) / (app.maxFps * (ms / 1000)),
+                y: (this.to.y - this.y) / (app.maxFps * (ms / 1000)),
+            };
+            this.once('endMove', () => {
                 resolve(true);
             });
         });
@@ -422,4 +483,6 @@ class CanvasScene {
 exports.CanvasApp = CanvasApp;
 exports.CanvasComponent = CanvasComponent;
 exports.CanvasScene = CanvasScene;
-exports.CanvasSceneController = CanvasSceneController;
+exports.ElementEventsController = ElementEventController;
+exports.FrameController = FrameController;
+exports.SceneController = SceneController;

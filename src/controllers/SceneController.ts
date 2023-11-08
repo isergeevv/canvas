@@ -1,7 +1,7 @@
 import { CanvasApp, CanvasComponent } from '../core';
 import CanvasScene from '../core/CanvasScene';
 
-export default class CanvasSceneController {
+export default class SceneController {
   private _scenes: Record<string, CanvasScene>;
   private _currentSceneName: string;
 
@@ -51,7 +51,19 @@ export default class CanvasSceneController {
     this._currentSceneName = newSceneName;
   };
 
-  addScene = (sceneName: string, scene: CanvasScene) => {
+  addScene = (app: CanvasApp, sceneName: string, scene: CanvasScene) => {
+    for (const component of scene.components) {
+      component.parent = app;
+    }
     this._scenes[sceneName] = scene;
+  };
+
+  drawScene = (app: CanvasApp, timestamp: number) => {
+    for (const component of this._scenes[this._currentSceneName].components) {
+      component.prepareFrame(app, timestamp);
+    }
+    for (const component of this._scenes[this._currentSceneName].components) {
+      component.drawFrame(app.ctx);
+    }
   };
 }

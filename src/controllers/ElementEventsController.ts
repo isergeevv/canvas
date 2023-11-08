@@ -1,16 +1,16 @@
 import { CanvasApp } from '../core';
-import { ElementEventHandler } from '../types';
+import { CanvasElementEventHandler } from '../types';
 
 export default class ElementEventController {
   private _eventListeners: Record<string, EventListener>;
-  private _eventCallbacks: Map<string, ElementEventHandler[]>;
+  private _eventCallbacks: Map<string, CanvasElementEventHandler<unknown>[]>;
 
   constructor() {
     this._eventListeners = {};
     this._eventCallbacks = new Map();
   }
 
-  on = (name: string, cb: ElementEventHandler) => {
+  on = <T>(name: string, cb: CanvasElementEventHandler<T>) => {
     const callbacks = this._eventCallbacks.get(name);
     if (callbacks) {
       callbacks.push(cb);
@@ -20,7 +20,7 @@ export default class ElementEventController {
     this._eventCallbacks.set(name, [cb]);
   };
 
-  removeListener = (app: CanvasApp, name: string, cb: ElementEventHandler) => {
+  removeListener = <T>(app: CanvasApp, name: string, cb: CanvasElementEventHandler<T>) => {
     const callbacks = this._eventCallbacks.get(name);
     if (!callbacks) return;
 
@@ -37,7 +37,7 @@ export default class ElementEventController {
       const listeners = this._eventCallbacks.get(event);
       this._eventListeners[event] = (e: Event) => {
         for (const cb of listeners) {
-          cb(app, e);
+          cb({ app, event: e });
         }
       };
 
