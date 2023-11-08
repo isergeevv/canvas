@@ -119,11 +119,6 @@ export default class CanvasApp {
     this._assetsController.loadAssets(this._sceneController);
   };
 
-  private onPointerMove = (e: CanvasElementEvent<PointerEvent>) => {
-    this._lastPointerPos.x = e.event.offsetX;
-    this._lastPointerPos.y = e.event.offsetY;
-  };
-
   once = <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => {
     this._events.once(name, handler);
   };
@@ -167,6 +162,11 @@ export default class CanvasApp {
 
   addScene = (sceneName: string, scene: CanvasScene) => {
     this._sceneController.addScene(this, sceneName, scene);
+  };
+
+  private onPointerMove = (e: CanvasElementEvent<PointerEvent>) => {
+    this._lastPointerPos.x = e.event.offsetX;
+    this._lastPointerPos.y = e.event.offsetY;
   };
 
   private onWindowResize = (e?: UIEvent) => {

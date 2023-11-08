@@ -257,10 +257,6 @@ class CanvasApp {
         window.requestAnimationFrame(this.drawFrame);
         this._assetsController.loadAssets(this._sceneController);
     };
-    onPointerMove = (e) => {
-        this._lastPointerPos.x = e.event.offsetX;
-        this._lastPointerPos.y = e.event.offsetY;
-    };
     once = (name, handler) => {
         this._events.once(name, handler);
     };
@@ -296,6 +292,10 @@ class CanvasApp {
     };
     addScene = (sceneName, scene) => {
         this._sceneController.addScene(this, sceneName, scene);
+    };
+    onPointerMove = (e) => {
+        this._lastPointerPos.x = e.event.offsetX;
+        this._lastPointerPos.y = e.event.offsetY;
     };
     onWindowResize = (e) => {
         if (!this._fill)
@@ -406,7 +406,7 @@ class CanvasComponent {
         if (this.to.x !== undefined || this.to.y !== undefined) {
             if (this.to.x !== undefined) {
                 let newX = this.x + this.to.step.x;
-                if ((newX >= this.to.x && this.x >= this.to.x) || (newX >= this.to.x && this.x <= this.to.x)) {
+                if ((this.x <= this.to.x && newX >= this.to.x) || (this.x >= this.to.x && newX <= this.to.x)) {
                     newX = this.to.x;
                     this.to.x = undefined;
                 }
@@ -414,7 +414,7 @@ class CanvasComponent {
             }
             if (this.to.y !== undefined) {
                 let newY = this.y + this.to.step.y;
-                if ((newY >= this.to.y && this.y >= this.to.y) || (newY >= this.to.y && this.y <= this.to.y)) {
+                if ((this.y <= this.to.y && newY >= this.to.y) || (this.y >= this.to.y && newY <= this.to.y)) {
                     newY = this.to.y;
                     this.to.y = undefined;
                 }
@@ -453,8 +453,12 @@ class CanvasComponent {
             this.to.x = pos.x;
             this.to.y = pos.y;
             this.to.step = {
-                x: (this.to.x - this.x) / (app.maxFps * (ms / 1000)),
-                y: (this.to.y - this.y) / (app.maxFps * (ms / 1000)),
+                x: this.to.x > this.x
+                    ? (this.to.x - this.x) / (app.maxFps * (ms / 1000))
+                    : ((this.x - this.to.x) / (app.maxFps * (ms / 1000))) * -1,
+                y: this.to.y > this.y
+                    ? (this.to.y - this.y) / (app.maxFps * (ms / 1000))
+                    : ((this.y - this.to.y) / (app.maxFps * (ms / 1000))) * -1,
             };
             this.once('endMove', () => {
                 resolve(true);

@@ -132,7 +132,6 @@ declare class CanvasApp {
     set currentSceneName(value: string);
     set data(value: any);
     init: (ctx: CanvasRenderingContext2D, startScene?: string) => void;
-    private onPointerMove;
     once: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
     on: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
     emit: <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => void;
@@ -143,6 +142,7 @@ declare class CanvasApp {
     detachEvents: () => void;
     drawFrame: (timestamp: number) => void;
     addScene: (sceneName: string, scene: CanvasScene) => void;
+    private onPointerMove;
     private onWindowResize;
 }
 
