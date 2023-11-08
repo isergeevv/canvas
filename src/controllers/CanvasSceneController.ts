@@ -19,6 +19,13 @@ export default class CanvasSceneController {
     return this._scenes;
   }
 
+  destroySceneComponents = (app: CanvasApp, components: CanvasComponent[]) => {
+    for (const component of components) {
+      component.destroy && component.destroy(app);
+      this.destroySceneComponents(app, component.children);
+    }
+  };
+
   init = (startScene?: string) => {
     const firstSceneName = startScene || Object.keys(this._scenes).at(0);
     if (!firstSceneName) {
@@ -44,7 +51,19 @@ export default class CanvasSceneController {
     this._currentSceneName = newSceneName;
   };
 
-  addScene = (sceneName: string, scene: CanvasScene) => {
+  addScene = (app: CanvasApp, sceneName: string, scene: CanvasScene) => {
+    for (const component of scene.components) {
+      component.parent = app;
+    }
     this._scenes[sceneName] = scene;
+  };
+
+  drawScene = (app: CanvasApp, timestamp: number) => {
+    for (const component of this._scenes[this._currentSceneName].components) {
+      component.prepareFrame(app, timestamp);
+    }
+    for (const component of this._scenes[this._currentSceneName].components) {
+      component.drawFrame(app.ctx);
+    }
   };
 }

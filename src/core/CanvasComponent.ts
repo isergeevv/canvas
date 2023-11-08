@@ -1,16 +1,20 @@
-import { CanvasEvent, ComponentEvent, Position, Size } from '../types';
+import { Asset, CanvasComponentEventHandler, CanvasEvent, Position, Size, To } from '../types';
 import CanvasApp from './CanvasApp';
+import EventEmitter from 'events';
 
 export default abstract class CanvasComponent {
   private _pos: Position;
   private _size: Size;
+  private _to: To;
   private _id: string;
   private _children: CanvasComponent[];
   private _parent: CanvasComponent | CanvasApp;
-  private _events: Map<string, ComponentEvent[]>;
+  private _events: EventEmitter;
+  private _assets: Record<string, Asset>;
 
   constructor(id = '') {
-    this._events = new Map();
+    this._assets = {};
+    this._events = new EventEmitter();
     this._children = [];
     this._id = id;
     this._pos = {
@@ -20,6 +24,14 @@ export default abstract class CanvasComponent {
     this._size = {
       width: 0,
       height: 0,
+    };
+    this._to = {
+      x: undefined,
+      y: undefined,
+      step: {
+        x: undefined,
+        y: undefined,
+      },
     };
   }
 
@@ -44,6 +56,12 @@ export default abstract class CanvasComponent {
   get parent() {
     return this._parent;
   }
+  get to() {
+    return this._to;
+  }
+  get assets() {
+    return this._assets;
+  }
 
   set x(value: number) {
     this._pos.x = value;
@@ -61,34 +79,51 @@ export default abstract class CanvasComponent {
     this._parent = value;
   }
 
-  on = (name: string, cb: ComponentEvent) => {
-    const listeners = this._events.get(name);
-    if (listeners) {
-      listeners.push(cb);
-      return;
+  once = (name: string, handler: CanvasComponentEventHandler) => {
+    this._events.once(name, handler);
+  };
+  on = (name: string, handler: CanvasComponentEventHandler) => {
+    this._events.on(name, handler);
+  };
+  emit = (name: string, e: CanvasEvent) => {
+    this._events.emit(name, e);
+  };
+  removeListener = (name: string, handler: CanvasComponentEventHandler) => {
+    this._events.removeListener(name, handler);
+  };
+
+  prepareFrame = (app: CanvasApp, timestamp: number) => {
+    if (this.to.x !== undefined || this.to.y !== undefined) {
+      if (this.to.x !== undefined) {
+        let newX = this.x + this.to.step.x;
+        if ((newX >= this.to.x && this.x >= this.to.x) || (newX >= this.to.x && this.x <= this.to.x)) {
+          newX = this.to.x;
+          this.to.x = undefined;
+        }
+        this.x = newX;
+      }
+      if (this.to.y !== undefined) {
+        let newY = this.y + this.to.step.y;
+        if ((newY >= this.to.y && this.y >= this.to.y) || (newY >= this.to.y && this.y <= this.to.y)) {
+          newY = this.to.y;
+          this.to.y = undefined;
+        }
+        this.y = newY;
+      }
+      if (this.to.x === undefined && this.to.y === undefined) {
+        this.emit('endMove', { app });
+      }
     }
-    this._events.set(name, [cb]);
-  };
-
-  emit = (name: string) => {
-    const listeners = this._events.get(name) || [];
-    for (const listener of listeners) {
-      listener();
-    }
-  };
-
-  removeListener = (name: string, cb: ComponentEvent) => {
-    this._events.set(
-      name,
-      (this._events.get(name) || []).filter((listener) => listener !== cb),
-    );
-  };
-
-  drawFrame = (app: CanvasApp, timestamp: number) => {
-    this.draw(app, timestamp);
-
+    if (this.prepare && this.prepare(app, timestamp)) return;
     for (const child of this.children) {
-      child.drawFrame(app, timestamp);
+      child.prepareFrame(app, timestamp);
+    }
+  };
+
+  drawFrame = (ctx: CanvasRenderingContext2D) => {
+    this.draw(ctx);
+    for (const child of this.children) {
+      child.drawFrame(ctx);
     }
   };
 
@@ -99,7 +134,36 @@ export default abstract class CanvasComponent {
     }
   };
 
-  abstract draw(app: CanvasApp, timestamp: number): boolean | void;
+  resizeCanvas = (app: CanvasApp) => {
+    this.resize && this.resize(app);
+    for (const child of this.children) {
+      child.resizeCanvas(app);
+    }
+  };
+
+  moveTo = async (app: CanvasApp, pos: Partial<Position>, ms: number) => {
+    return new Promise((resolve) => {
+      this.to.x = pos.x;
+      this.to.y = pos.y;
+      this.to.step = {
+        x: (this.to.x - this.x) / (app.maxFps * (ms / 1000)),
+        y: (this.to.y - this.y) / (app.maxFps * (ms / 1000)),
+      };
+      this.once('endMove', () => {
+        resolve(true);
+      });
+    });
+  };
+
+  abstract draw(ctx: CanvasRenderingContext2D): void;
 
   init?: (app: CanvasApp) => void;
+
+  prepare?: (app: CanvasApp, timestamp: number) => boolean | void;
+
+  destroy?: (app: CanvasApp) => void;
+
+  loadAssets?: () => Record<string, string>;
+
+  resize?: (app: CanvasApp) => void;
 }

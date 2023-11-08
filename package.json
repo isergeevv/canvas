@@ -1,6 +1,6 @@
 {
   "name": "@isergeevv/canvas",
-  "version": "0.0.17",
+  "version": "0.0.21",
   "description": "",
   "type": "module",
   "main": "./build/esm/index.js",
