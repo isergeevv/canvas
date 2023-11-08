@@ -444,6 +444,9 @@ class CanvasComponent {
             component.parent = this;
         }
     };
+    removeChild = (component) => {
+        this._children = this._children.filter((child) => child !== component);
+    };
     resizeCanvas = (app) => {
         this.resize && this.resize(app);
         for (const child of this.children) {

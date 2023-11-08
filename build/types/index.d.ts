@@ -67,6 +67,7 @@ declare abstract class CanvasComponent {
     prepareFrame: (app: CanvasApp, timestamp: number) => void;
     drawFrame: (ctx: CanvasRenderingContext2D) => void;
     addChild: (...components: CanvasComponent[]) => void;
+    removeChild: (component: CanvasComponent) => void;
     resizeCanvas: (app: CanvasApp) => void;
     moveTo: (app: CanvasApp, pos: Partial<Position>, ms: number) => Promise<unknown>;
     abstract draw(ctx: CanvasRenderingContext2D): void;

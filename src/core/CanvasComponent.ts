@@ -134,6 +134,10 @@ export default abstract class CanvasComponent {
     }
   };
 
+  removeChild = (component: CanvasComponent) => {
+    this._children = this._children.filter((child) => child !== component);
+  };
+
   resizeCanvas = (app: CanvasApp) => {
     this.resize && this.resize(app);
     for (const child of this.children) {
