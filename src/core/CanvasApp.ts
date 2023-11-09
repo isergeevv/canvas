@@ -133,7 +133,7 @@ export default class CanvasApp {
   };
 
   getState = (name: string) => {
-    return this._state.get(name) || null;
+    return this._state.get(name) ?? null;
   };
   setState = (name: string, value: any) => {
     this._state.set(name, value);

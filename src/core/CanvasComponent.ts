@@ -1,4 +1,5 @@
 import { Asset, CanvasComponentEventHandler, CanvasEvent, Position, Size, To } from '../types';
+import * as util from '../util';
 import CanvasApp from './CanvasApp';
 import EventEmitter from 'events';
 
@@ -150,14 +151,8 @@ export default abstract class CanvasComponent {
       this.to.x = pos.x;
       this.to.y = pos.y;
       this.to.step = {
-        x:
-          this.to.x > this.x
-            ? (this.to.x - this.x) / (app.maxFps * (ms / 1000))
-            : ((this.x - this.to.x) / (app.maxFps * (ms / 1000))) * -1,
-        y:
-          this.to.y > this.y
-            ? (this.to.y - this.y) / (app.maxFps * (ms / 1000))
-            : ((this.y - this.to.y) / (app.maxFps * (ms / 1000))) * -1,
+        x: util.getStep(this.x, this.to.x, app.fps, ms),
+        y: util.getStep(this.y, this.to.y, app.fps, ms),
       };
       this.once('endMove', () => {
         resolve(true);

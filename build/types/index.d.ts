@@ -179,4 +179,6 @@ declare class CanvasAssetsController {
     loadAssets: (sceneController: CanvasSceneController) => Promise<void>;
 }
 
-export { Asset, CanvasApp, CanvasAppEventHandler, CanvasAppEvents, CanvasAppOptions, CanvasAppSwitchSceneEvent, CanvasAssetsController, CanvasComponent, CanvasComponentEventHandler, CanvasElementEvent, CanvasElementEventHandler, CanvasElementEventsController, CanvasEvent, CanvasFrameController, CanvasScene, CanvasSceneController, Position, S, Size, To };
+declare const getStep: (cur: number, to: number, maxFps: number, ms: number) => number;
+
+export { Asset, CanvasApp, CanvasAppEventHandler, CanvasAppEvents, CanvasAppOptions, CanvasAppSwitchSceneEvent, CanvasAssetsController, CanvasComponent, CanvasComponentEventHandler, CanvasElementEvent, CanvasElementEventHandler, CanvasElementEventsController, CanvasEvent, CanvasFrameController, CanvasScene, CanvasSceneController, Position, S, Size, To, getStep };

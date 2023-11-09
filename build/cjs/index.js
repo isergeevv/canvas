@@ -272,7 +272,7 @@ class CanvasApp {
         this._events.removeListener(name, handler);
     };
     getState = (name) => {
-        return this._state.get(name) || null;
+        return this._state.get(name) ?? null;
     };
     setState = (name, value) => {
         this._state.set(name, value);
@@ -318,6 +318,20 @@ class CanvasApp {
         this._windowResizeDebounce = setTimeout(debounce, 50);
     };
 }
+
+const getStep = (cur, to, maxFps, ms) => {
+    if (to === undefined)
+        return undefined;
+    const positive = to > cur;
+    const step = Number((cur === to
+        ? 0
+        : positive
+            ? (to - cur) / (maxFps * (ms / 1000))
+            : ((cur - to) / (maxFps * (ms / 1000))) * -1).toFixed(5));
+    if (!step)
+        return positive ? 0.001 : -0.001;
+    return step;
+};
 
 class CanvasComponent {
     _pos;
@@ -458,12 +472,8 @@ class CanvasComponent {
             this.to.x = pos.x;
             this.to.y = pos.y;
             this.to.step = {
-                x: this.to.x > this.x
-                    ? (this.to.x - this.x) / (app.maxFps * (ms / 1000))
-                    : ((this.x - this.to.x) / (app.maxFps * (ms / 1000))) * -1,
-                y: this.to.y > this.y
-                    ? (this.to.y - this.y) / (app.maxFps * (ms / 1000))
-                    : ((this.y - this.to.y) / (app.maxFps * (ms / 1000))) * -1,
+                x: getStep(this.x, this.to.x, app.fps, ms),
+                y: getStep(this.y, this.to.y, app.fps, ms),
             };
             this.once('endMove', () => {
                 resolve(true);
@@ -505,3 +515,4 @@ exports.CanvasElementEventsController = CanvasElementEventsController;
 exports.CanvasFrameController = CanvasFrameController;
 exports.CanvasScene = CanvasScene;
 exports.CanvasSceneController = CanvasSceneController;
+exports.getStep = getStep;
