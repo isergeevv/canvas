@@ -233,7 +233,20 @@ class CanvasApp {
     set height(value) {
         this._ctx.canvas.height = value;
     }
-    set currentSceneName(value) {
+    set data(value) {
+        this._data = value;
+    }
+    setContext = (ctx) => {
+        this._ctx = ctx;
+    };
+    init = (startScene) => {
+        this._sceneController.init(startScene);
+        this._sceneController.initSceneComponents(this, this.currentScene.components);
+        this._elementEventsController.on('pointermove', this.onPointerMove);
+        window.requestAnimationFrame(this.drawFrame);
+        this._assetsController.loadAssets(this._sceneController);
+    };
+    setScene = (value) => {
         this._elementEventsController.resetEvents();
         const oldSceneName = this._sceneController.currentSceneName;
         this._sceneController.destroySceneComponents(this, this.currentScene.components);
@@ -245,17 +258,6 @@ class CanvasApp {
             previous: oldSceneName,
             current: this._sceneController.currentSceneName,
         });
-    }
-    set data(value) {
-        this._data = value;
-    }
-    init = (ctx, startScene) => {
-        this._ctx = ctx;
-        this._sceneController.init(startScene);
-        this._sceneController.initSceneComponents(this, this.currentScene.components);
-        this._elementEventsController.on('pointermove', this.onPointerMove);
-        window.requestAnimationFrame(this.drawFrame);
-        this._assetsController.loadAssets(this._sceneController);
     };
     once = (name, handler) => {
         this._events.once(name, handler);

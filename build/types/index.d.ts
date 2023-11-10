@@ -130,9 +130,10 @@ declare class CanvasApp {
     get maxFps(): number;
     set width(value: number);
     set height(value: number);
-    set currentSceneName(value: string);
     set data(value: any);
-    init: (ctx: CanvasRenderingContext2D, startScene?: string) => void;
+    setContext: (ctx: CanvasRenderingContext2D) => void;
+    init: (startScene?: string) => void;
+    setScene: (value: string) => void;
     once: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
     on: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
     emit: <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => void;

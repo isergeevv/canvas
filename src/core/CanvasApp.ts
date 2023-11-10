@@ -85,7 +85,26 @@ export default class CanvasApp {
   set height(value: number) {
     this._ctx.canvas.height = value;
   }
-  set currentSceneName(value: string) {
+  set data(value: any) {
+    this._data = value;
+  }
+
+  setContext = (ctx: CanvasRenderingContext2D) => {
+    this._ctx = ctx;
+  }
+
+  init = (startScene?: string) => {
+    this._sceneController.init(startScene);
+    this._sceneController.initSceneComponents(this, this.currentScene.components);
+
+    this._elementEventsController.on('pointermove', this.onPointerMove);
+
+    window.requestAnimationFrame(this.drawFrame);
+
+    this._assetsController.loadAssets(this._sceneController);
+  };
+
+  setScene = (value: string) => {
     this._elementEventsController.resetEvents();
 
     const oldSceneName = this._sceneController.currentSceneName;
@@ -102,22 +121,6 @@ export default class CanvasApp {
       current: this._sceneController.currentSceneName,
     });
   }
-  set data(value: any) {
-    this._data = value;
-  }
-
-  init = (ctx: CanvasRenderingContext2D, startScene?: string) => {
-    this._ctx = ctx;
-
-    this._sceneController.init(startScene);
-    this._sceneController.initSceneComponents(this, this.currentScene.components);
-
-    this._elementEventsController.on('pointermove', this.onPointerMove);
-
-    window.requestAnimationFrame(this.drawFrame);
-
-    this._assetsController.loadAssets(this._sceneController);
-  };
 
   once = <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => {
     this._events.once(name, handler);
