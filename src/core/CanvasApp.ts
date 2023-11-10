@@ -138,6 +138,9 @@ export default class CanvasApp {
   setState = (name: string, value: any) => {
     this._state.set(name, value);
   };
+  resetState = () => {
+    this._state.clear();
+  }
 
   attachEvents = () => {
     window.addEventListener('resize', this.onWindowResize);

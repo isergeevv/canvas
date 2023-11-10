@@ -139,6 +139,7 @@ declare class CanvasApp {
     removeListener: (name: string, handler: CanvasAppEventHandler) => void;
     getState: (name: string) => any;
     setState: (name: string, value: any) => void;
+    resetState: () => void;
     attachEvents: () => void;
     detachEvents: () => void;
     drawFrame: (timestamp: number) => void;
