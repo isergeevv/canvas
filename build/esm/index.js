@@ -475,8 +475,8 @@ class CanvasComponent {
             this.to.x = pos.x;
             this.to.y = pos.y;
             this.to.step = {
-                x: getStep(this.x, this.to.x, app.fps, ms),
-                y: getStep(this.y, this.to.y, app.fps, ms),
+                x: getStep(this.x, this.to.x, app.maxFps, ms),
+                y: getStep(this.y, this.to.y, app.maxFps, ms),
             };
             this.once('endMove', () => {
                 resolve(true);
