@@ -28,7 +28,7 @@ interface CanvasAppEvents {
     sceneChange: CanvasAppSwitchSceneEvent;
     endMove: CanvasEvent;
 }
-type CanvasAppEventHandler = <T extends keyof CanvasAppEvents>(e: CanvasAppEvents[T]) => void;
+type CanvasAppEventHandler<T extends keyof CanvasAppEvents> = (e: CanvasAppEvents[T]) => void;
 interface CanvasElementEvent<T> extends CanvasEvent {
     event: T;
 }
@@ -134,10 +134,10 @@ declare class CanvasApp {
     setContext: (ctx: CanvasRenderingContext2D) => void;
     init: (startScene?: string) => void;
     setScene: (value: string) => void;
-    once: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
-    on: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => void;
+    once: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler<T>) => void;
+    on: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler<T>) => void;
     emit: <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => void;
-    removeListener: (name: string, handler: CanvasAppEventHandler) => void;
+    removeListener: <T extends keyof CanvasAppEvents>(name: string, handler: CanvasAppEventHandler<T>) => void;
     getState: (name: string) => any;
     setState: (name: string, value: any) => void;
     resetState: () => void;

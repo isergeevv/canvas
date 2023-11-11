@@ -38,7 +38,7 @@ export interface CanvasAppEvents {
   endMove: CanvasEvent;
 }
 
-export type CanvasAppEventHandler = <T extends keyof CanvasAppEvents>(e: CanvasAppEvents[T]) => void;
+export type CanvasAppEventHandler<T extends keyof CanvasAppEvents> = (e: CanvasAppEvents[T]) => void;
 
 export interface CanvasElementEvent<T> extends CanvasEvent {
   event: T;

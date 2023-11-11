@@ -91,7 +91,7 @@ export default class CanvasApp {
 
   setContext = (ctx: CanvasRenderingContext2D) => {
     this._ctx = ctx;
-  }
+  };
 
   init = (startScene?: string) => {
     this._sceneController.init(startScene);
@@ -120,18 +120,18 @@ export default class CanvasApp {
       previous: oldSceneName,
       current: this._sceneController.currentSceneName,
     });
-  }
+  };
 
-  once = <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => {
+  once = <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler<T>) => {
     this._events.once(name, handler);
   };
-  on = <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler) => {
+  on = <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler<T>) => {
     this._events.on(name, handler);
   };
   emit = <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => {
     this._events.emit(name, e);
   };
-  removeListener = (name: string, handler: CanvasAppEventHandler) => {
+  removeListener = <T extends keyof CanvasAppEvents>(name: string, handler: CanvasAppEventHandler<T>) => {
     this._events.removeListener(name, handler);
   };
 
@@ -143,7 +143,7 @@ export default class CanvasApp {
   };
   resetState = () => {
     this._state.clear();
-  }
+  };
 
   attachEvents = () => {
     window.addEventListener('resize', this.onWindowResize);
