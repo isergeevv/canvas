@@ -7,6 +7,7 @@ import CanvasSceneController from '../controllers/CanvasSceneController';
 import CanvasAssetsController from '../controllers/CanvasAssetsController';
 import CanvasDrawController from '../controllers/CanvasDrawController';
 import CanvasComponent from './CanvasComponent';
+import CanvasResizeController from '../controllers/CanvasResizeController';
 
 export default class CanvasApp {
   private _ctx: CanvasRenderingContext2D;
@@ -15,6 +16,7 @@ export default class CanvasApp {
   private _elementEventsController: CanvasElementEventsController;
   private _frameController: CanvasFrameController;
   private _assetsController: CanvasAssetsController;
+  private _resizeController: CanvasResizeController;
   private _fill: boolean;
   private _lastPointerPos: Position;
   private _data: any;
@@ -37,6 +39,7 @@ export default class CanvasApp {
     this._frameController = new CanvasFrameController(opt.maxFps);
     this._assetsController = new CanvasAssetsController();
     this._drawController = new CanvasDrawController();
+    this._resizeController = new CanvasResizeController();
   }
 
   get x() {
@@ -199,9 +202,7 @@ export default class CanvasApp {
       this.width = window.innerWidth;
       this.height = window.innerHeight;
 
-      for (const component of this._sceneController.currentScene.components) {
-        component.resizeCanvas(this);
-      }
+      this._resizeController.resizeCanvas(this, this._sceneController.currentScene.components);
     };
 
     if (!e) {

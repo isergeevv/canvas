@@ -24,7 +24,7 @@ export default class CanvasDrawController {
       if (drawList[zIndex]) drawList[zIndex].push(component);
       else drawList[zIndex] = [component];
 
-      if (!this.prepareFrame(app, timestamp, component) && component.children.length) {
+      if (!this.prepareFrame(app, timestamp, component)) {
         this.prepareComponents(app, timestamp, component.children, drawList);
       }
     }

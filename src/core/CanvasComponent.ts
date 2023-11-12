@@ -117,13 +117,6 @@ export default abstract class CanvasComponent {
     this.parent.removeChild(this);
   };
 
-  resizeCanvas = (app: CanvasApp) => {
-    this.resize && this.resize(app);
-    for (const child of this.children) {
-      child.resizeCanvas(app);
-    }
-  };
-
   moveTo = async (app: CanvasApp, pos: Partial<Position>, ms: number, cb?: CanvasComponentEventHandler) => {
     return new Promise((resolve) => {
       this.to.x = pos.x;

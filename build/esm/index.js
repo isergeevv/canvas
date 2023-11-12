@@ -173,7 +173,7 @@ class CanvasDrawController {
                 drawList[zIndex].push(component);
             else
                 drawList[zIndex] = [component];
-            if (!this.prepareFrame(app, timestamp, component) && component.children.length) {
+            if (!this.prepareFrame(app, timestamp, component)) {
                 this.prepareComponents(app, timestamp, component.children, drawList);
             }
         }
@@ -205,6 +205,15 @@ class CanvasDrawController {
     };
 }
 
+class CanvasResizeController {
+    resizeCanvas = (app, components) => {
+        for (const component of components) {
+            component.resize && component.resize(app);
+            this.resizeCanvas(app, component.children);
+        }
+    };
+}
+
 class CanvasApp {
     _ctx;
     _sceneController;
@@ -212,6 +221,7 @@ class CanvasApp {
     _elementEventsController;
     _frameController;
     _assetsController;
+    _resizeController;
     _fill;
     _lastPointerPos;
     _data;
@@ -231,6 +241,7 @@ class CanvasApp {
         this._frameController = new CanvasFrameController(opt.maxFps);
         this._assetsController = new CanvasAssetsController();
         this._drawController = new CanvasDrawController();
+        this._resizeController = new CanvasResizeController();
     }
     get x() {
         return 0;
@@ -367,9 +378,7 @@ class CanvasApp {
         const debounce = () => {
             this.width = window.innerWidth;
             this.height = window.innerHeight;
-            for (const component of this._sceneController.currentScene.components) {
-                component.resizeCanvas(this);
-            }
+            this._resizeController.resizeCanvas(this, this._sceneController.currentScene.components);
         };
         if (!e) {
             debounce();
@@ -502,12 +511,6 @@ class CanvasComponent {
     };
     remove = () => {
         this.parent.removeChild(this);
-    };
-    resizeCanvas = (app) => {
-        this.resize && this.resize(app);
-        for (const child of this.children) {
-            child.resizeCanvas(app);
-        }
     };
     moveTo = async (app, pos, ms, cb) => {
         return new Promise((resolve) => {

@@ -71,7 +71,6 @@ declare abstract class CanvasComponent {
     addChild: (...components: CanvasComponent[]) => void;
     removeChild: (component: CanvasComponent) => void;
     remove: () => void;
-    resizeCanvas: (app: CanvasApp) => void;
     moveTo: (app: CanvasApp, pos: Partial<Position>, ms: number, cb?: CanvasComponentEventHandler) => Promise<unknown>;
     abstract draw(ctx: CanvasRenderingContext2D): void;
     init?: (app: CanvasApp) => void;
@@ -112,6 +111,7 @@ declare class CanvasApp {
     private _elementEventsController;
     private _frameController;
     private _assetsController;
+    private _resizeController;
     private _fill;
     private _lastPointerPos;
     private _data;
