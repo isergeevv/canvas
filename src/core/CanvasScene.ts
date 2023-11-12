@@ -25,4 +25,8 @@ export default class CanvasScene {
   addComponent = (component: CanvasComponent) => {
     this._components.push(component);
   };
+
+  removeComponent = (component: CanvasComponent) => {
+    this._components = this._components.filter((c) => c !== component);
+  };
 }

@@ -58,12 +58,7 @@ export default class CanvasSceneController {
     this._scenes[sceneName] = scene;
   };
 
-  drawScene = (app: CanvasApp, timestamp: number) => {
-    for (const component of this._scenes[this._currentSceneName].components) {
-      component.prepareFrame(app, timestamp);
-    }
-    for (const component of this._scenes[this._currentSceneName].components) {
-      component.drawFrame(app.ctx);
-    }
+  removeComponent = (component: CanvasComponent) => {
+    this._scenes[this._currentSceneName].removeComponent(component);
   };
 }

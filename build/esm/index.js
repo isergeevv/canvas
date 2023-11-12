@@ -130,13 +130,8 @@ class CanvasSceneController {
         }
         this._scenes[sceneName] = scene;
     };
-    drawScene = (app, timestamp) => {
-        for (const component of this._scenes[this._currentSceneName].components) {
-            component.prepareFrame(app, timestamp);
-        }
-        for (const component of this._scenes[this._currentSceneName].components) {
-            component.drawFrame(app.ctx);
-        }
+    removeComponent = (component) => {
+        this._scenes[this._currentSceneName].removeComponent(component);
     };
 }
 
@@ -160,9 +155,60 @@ class CanvasAssetsController {
     };
 }
 
+class CanvasDrawController {
+    drawScene = (app, timestamp) => {
+        const drawList = this.prepareComponents(app, timestamp, app.currentScene.components);
+        const zIndexes = Object.keys(drawList);
+        for (const zIndex of zIndexes) {
+            for (const component of drawList[zIndex]) {
+                component.draw(app.ctx);
+                component.zIndex = 0;
+            }
+        }
+    };
+    prepareComponents = (app, timestamp, components, drawList = {}) => {
+        for (const component of components) {
+            const zIndex = component.zIndex;
+            if (drawList[zIndex])
+                drawList[zIndex].push(component);
+            else
+                drawList[zIndex] = [component];
+            if (!this.prepareFrame(app, timestamp, component) && component.children.length) {
+                this.prepareComponents(app, timestamp, component.children, drawList);
+            }
+        }
+        return drawList;
+    };
+    prepareFrame = (app, timestamp, c) => {
+        if (c.to.x !== undefined || c.to.y !== undefined) {
+            if (c.to.x !== undefined) {
+                let newX = c.x + c.to.step.x;
+                if ((c.x <= c.to.x && newX >= c.to.x) || (c.x >= c.to.x && newX <= c.to.x)) {
+                    newX = c.to.x;
+                    c.to.x = undefined;
+                }
+                c.x = newX;
+            }
+            if (c.to.y !== undefined) {
+                let newY = c.y + c.to.step.y;
+                if ((c.y <= c.to.y && newY >= c.to.y) || (c.y >= c.to.y && newY <= c.to.y)) {
+                    newY = c.to.y;
+                    c.to.y = undefined;
+                }
+                c.y = newY;
+            }
+            if (c.to.x === undefined && c.to.y === undefined) {
+                c.emit('endMove', { app });
+            }
+        }
+        return (c.prepare && c.prepare(app, timestamp)) || false;
+    };
+}
+
 class CanvasApp {
     _ctx;
     _sceneController;
+    _drawController;
     _elementEventsController;
     _frameController;
     _assetsController;
@@ -184,6 +230,7 @@ class CanvasApp {
         this._elementEventsController = new CanvasElementEventsController();
         this._frameController = new CanvasFrameController(opt.maxFps);
         this._assetsController = new CanvasAssetsController();
+        this._drawController = new CanvasDrawController();
     }
     get x() {
         return 0;
@@ -226,6 +273,9 @@ class CanvasApp {
     }
     get maxFps() {
         return this._frameController.maxFps;
+    }
+    get children() {
+        return this._sceneController.currentScene.components;
     }
     set width(value) {
         this._ctx.canvas.width = value;
@@ -293,10 +343,19 @@ class CanvasApp {
         window.requestAnimationFrame(this.drawFrame);
         if (!this._frameController.addFrame(timestamp))
             return;
-        this._sceneController.drawScene(this, timestamp);
+        this._drawController.drawScene(this, timestamp);
     };
     addScene = (sceneName, scene) => {
         this._sceneController.addScene(this, sceneName, scene);
+    };
+    addChild = (...components) => {
+        for (const component of components) {
+            this._sceneController.currentScene.addComponent(component);
+            component.parent = this;
+        }
+    };
+    removeChild = (component) => {
+        this._sceneController.removeComponent(component);
     };
     onPointerMove = (e) => {
         this._lastPointerPos.x = e.event.offsetX;
@@ -340,6 +399,7 @@ class CanvasComponent {
     _pos;
     _size;
     _to;
+    _zIndex;
     _id;
     _children;
     _parent;
@@ -366,6 +426,7 @@ class CanvasComponent {
                 y: undefined,
             },
         };
+        this._zIndex = 0;
     }
     get children() {
         return this._children;
@@ -397,6 +458,9 @@ class CanvasComponent {
     get isMoving() {
         return this.to.x !== undefined || this.to.y !== undefined;
     }
+    get zIndex() {
+        return this._zIndex;
+    }
     set x(value) {
         this._pos.x = value;
     }
@@ -412,6 +476,9 @@ class CanvasComponent {
     set parent(value) {
         this._parent = value;
     }
+    set zIndex(value) {
+        this._zIndex = value;
+    }
     once = (name, handler) => {
         this._events.once(name, handler);
     };
@@ -424,40 +491,6 @@ class CanvasComponent {
     removeListener = (name, handler) => {
         this._events.removeListener(name, handler);
     };
-    prepareFrame = (app, timestamp) => {
-        if (this.to.x !== undefined || this.to.y !== undefined) {
-            if (this.to.x !== undefined) {
-                let newX = this.x + this.to.step.x;
-                if ((this.x <= this.to.x && newX >= this.to.x) || (this.x >= this.to.x && newX <= this.to.x)) {
-                    newX = this.to.x;
-                    this.to.x = undefined;
-                }
-                this.x = newX;
-            }
-            if (this.to.y !== undefined) {
-                let newY = this.y + this.to.step.y;
-                if ((this.y <= this.to.y && newY >= this.to.y) || (this.y >= this.to.y && newY <= this.to.y)) {
-                    newY = this.to.y;
-                    this.to.y = undefined;
-                }
-                this.y = newY;
-            }
-            if (this.to.x === undefined && this.to.y === undefined) {
-                this.emit('endMove', { app });
-            }
-        }
-        if (this.prepare && this.prepare(app, timestamp))
-            return;
-        for (const child of this.children) {
-            child.prepareFrame(app, timestamp);
-        }
-    };
-    drawFrame = (ctx) => {
-        this.draw(ctx);
-        for (const child of this.children) {
-            child.drawFrame(ctx);
-        }
-    };
     addChild = (...components) => {
         for (const component of components) {
             this._children.push(component);
@@ -466,6 +499,9 @@ class CanvasComponent {
     };
     removeChild = (component) => {
         this._children = this._children.filter((child) => child !== component);
+    };
+    remove = () => {
+        this.parent.removeChild(this);
     };
     resizeCanvas = (app) => {
         this.resize && this.resize(app);
@@ -512,6 +548,9 @@ class CanvasScene {
     };
     addComponent = (component) => {
         this._components.push(component);
+    };
+    removeComponent = (component) => {
+        this._components = this._components.filter((c) => c !== component);
     };
 }
 

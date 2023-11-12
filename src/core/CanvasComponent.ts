@@ -7,6 +7,7 @@ export default abstract class CanvasComponent {
   private _pos: Position;
   private _size: Size;
   private _to: To;
+  private _zIndex: number;
   private _id: string;
   private _children: CanvasComponent[];
   private _parent: CanvasComponent | CanvasApp;
@@ -34,6 +35,7 @@ export default abstract class CanvasComponent {
         y: undefined,
       },
     };
+    this._zIndex = 0;
   }
 
   get children() {
@@ -66,6 +68,9 @@ export default abstract class CanvasComponent {
   get isMoving() {
     return this.to.x !== undefined || this.to.y !== undefined;
   }
+  get zIndex() {
+    return this._zIndex;
+  }
 
   set x(value: number) {
     this._pos.x = value;
@@ -82,6 +87,9 @@ export default abstract class CanvasComponent {
   set parent(value: CanvasComponent | CanvasApp) {
     this._parent = value;
   }
+  set zIndex(value: number) {
+    this._zIndex = value;
+  }
 
   once = (name: string, handler: CanvasComponentEventHandler) => {
     this._events.once(name, handler);
@@ -96,50 +104,17 @@ export default abstract class CanvasComponent {
     this._events.removeListener(name, handler);
   };
 
-  prepareFrame = (app: CanvasApp, timestamp: number) => {
-    if (this.to.x !== undefined || this.to.y !== undefined) {
-      if (this.to.x !== undefined) {
-        let newX = this.x + this.to.step.x;
-        if ((this.x <= this.to.x && newX >= this.to.x) || (this.x >= this.to.x && newX <= this.to.x)) {
-          newX = this.to.x;
-          this.to.x = undefined;
-        }
-        this.x = newX;
-      }
-      if (this.to.y !== undefined) {
-        let newY = this.y + this.to.step.y;
-        if ((this.y <= this.to.y && newY >= this.to.y) || (this.y >= this.to.y && newY <= this.to.y)) {
-          newY = this.to.y;
-          this.to.y = undefined;
-        }
-        this.y = newY;
-      }
-      if (this.to.x === undefined && this.to.y === undefined) {
-        this.emit('endMove', { app });
-      }
-    }
-    if (this.prepare && this.prepare(app, timestamp)) return;
-    for (const child of this.children) {
-      child.prepareFrame(app, timestamp);
-    }
-  };
-
-  drawFrame = (ctx: CanvasRenderingContext2D) => {
-    this.draw(ctx);
-    for (const child of this.children) {
-      child.drawFrame(ctx);
-    }
-  };
-
   addChild = (...components: CanvasComponent[]) => {
     for (const component of components) {
       this._children.push(component);
       component.parent = this;
     }
   };
-
   removeChild = (component: CanvasComponent) => {
     this._children = this._children.filter((child) => child !== component);
+  };
+  remove = () => {
+    this.parent.removeChild(this);
   };
 
   resizeCanvas = (app: CanvasApp) => {

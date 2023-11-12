@@ -5,10 +5,13 @@ import CanvasElementEventsController from '../controllers/CanvasElementEventsCon
 import CanvasFrameController from '../controllers/CanvasFrameController';
 import CanvasSceneController from '../controllers/CanvasSceneController';
 import CanvasAssetsController from '../controllers/CanvasAssetsController';
+import CanvasDrawController from '../controllers/CanvasDrawController';
+import CanvasComponent from './CanvasComponent';
 
 export default class CanvasApp {
   private _ctx: CanvasRenderingContext2D;
   private _sceneController: CanvasSceneController;
+  private _drawController: CanvasDrawController;
   private _elementEventsController: CanvasElementEventsController;
   private _frameController: CanvasFrameController;
   private _assetsController: CanvasAssetsController;
@@ -33,6 +36,7 @@ export default class CanvasApp {
     this._elementEventsController = new CanvasElementEventsController();
     this._frameController = new CanvasFrameController(opt.maxFps);
     this._assetsController = new CanvasAssetsController();
+    this._drawController = new CanvasDrawController();
   }
 
   get x() {
@@ -77,6 +81,9 @@ export default class CanvasApp {
   }
   get maxFps() {
     return this._frameController.maxFps;
+  }
+  get children() {
+    return this._sceneController.currentScene.components;
   }
 
   set width(value: number) {
@@ -163,11 +170,21 @@ export default class CanvasApp {
 
     if (!this._frameController.addFrame(timestamp)) return;
 
-    this._sceneController.drawScene(this, timestamp);
+    this._drawController.drawScene(this, timestamp);
   };
 
   addScene = (sceneName: string, scene: CanvasScene) => {
     this._sceneController.addScene(this, sceneName, scene);
+  };
+
+  addChild = (...components: CanvasComponent[]) => {
+    for (const component of components) {
+      this._sceneController.currentScene.addComponent(component);
+      component.parent = this;
+    }
+  };
+  removeChild = (component: CanvasComponent) => {
+    this._sceneController.removeComponent(component);
   };
 
   private onPointerMove = (e: CanvasElementEvent<PointerEvent>) => {
