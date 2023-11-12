@@ -394,6 +394,9 @@ class CanvasComponent {
     get assets() {
         return this._assets;
     }
+    get isMoving() {
+        return this.to.x !== undefined || this.to.y !== undefined;
+    }
     set x(value) {
         this._pos.x = value;
     }
@@ -470,7 +473,7 @@ class CanvasComponent {
             child.resizeCanvas(app);
         }
     };
-    moveTo = async (app, pos, ms) => {
+    moveTo = async (app, pos, ms, cb) => {
         return new Promise((resolve) => {
             this.to.x = pos.x;
             this.to.y = pos.y;
@@ -479,6 +482,7 @@ class CanvasComponent {
                 y: getStep(this.y, this.to.y, app.maxFps, ms),
             };
             this.once('endMove', () => {
+                cb && cb({ app });
                 resolve(true);
             });
         });

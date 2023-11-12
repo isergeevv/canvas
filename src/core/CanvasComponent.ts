@@ -63,6 +63,9 @@ export default abstract class CanvasComponent {
   get assets() {
     return this._assets;
   }
+  get isMoving() {
+    return this.to.x !== undefined || this.to.y !== undefined;
+  }
 
   set x(value: number) {
     this._pos.x = value;
@@ -146,7 +149,7 @@ export default abstract class CanvasComponent {
     }
   };
 
-  moveTo = async (app: CanvasApp, pos: Partial<Position>, ms: number) => {
+  moveTo = async (app: CanvasApp, pos: Partial<Position>, ms: number, cb?: CanvasComponentEventHandler) => {
     return new Promise((resolve) => {
       this.to.x = pos.x;
       this.to.y = pos.y;
@@ -155,6 +158,7 @@ export default abstract class CanvasComponent {
         y: util.getStep(this.y, this.to.y, app.maxFps, ms),
       };
       this.once('endMove', () => {
+        cb && cb({ app });
         resolve(true);
       });
     });

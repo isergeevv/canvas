@@ -55,6 +55,7 @@ declare abstract class CanvasComponent {
     get parent(): CanvasComponent | CanvasApp;
     get to(): To;
     get assets(): Record<string, Asset>;
+    get isMoving(): boolean;
     set x(value: number);
     set y(value: number);
     set width(value: number);
@@ -69,7 +70,7 @@ declare abstract class CanvasComponent {
     addChild: (...components: CanvasComponent[]) => void;
     removeChild: (component: CanvasComponent) => void;
     resizeCanvas: (app: CanvasApp) => void;
-    moveTo: (app: CanvasApp, pos: Partial<Position>, ms: number) => Promise<unknown>;
+    moveTo: (app: CanvasApp, pos: Partial<Position>, ms: number, cb?: CanvasComponentEventHandler) => Promise<unknown>;
     abstract draw(ctx: CanvasRenderingContext2D): void;
     init?: (app: CanvasApp) => void;
     prepare?: (app: CanvasApp, timestamp: number) => boolean | void;
