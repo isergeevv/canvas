@@ -27,6 +27,7 @@ export default class CanvasApp {
   constructor(opt: CanvasAppOptions) {
     this._events = new EventEmitter();
     this._state = new Map();
+    this._data = new Map();
 
     this._fill = opt.fill;
     this._lastPointerPos = {
