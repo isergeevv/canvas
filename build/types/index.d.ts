@@ -53,7 +53,7 @@ declare abstract class CanvasComponent {
     get y(): number;
     get width(): number;
     get height(): number;
-    get parent(): CanvasComponent | CanvasApp;
+    get parent(): CanvasApp | CanvasComponent;
     get to(): To;
     get assets(): Record<string, Asset>;
     get isMoving(): boolean;
@@ -62,8 +62,8 @@ declare abstract class CanvasComponent {
     set y(value: number);
     set width(value: number);
     set height(value: number);
-    set parent(value: CanvasComponent | CanvasApp);
     set zIndex(value: number);
+    setParent: (value: CanvasComponent | CanvasApp) => void;
     once: (name: string, handler: CanvasComponentEventHandler) => void;
     on: (name: string, handler: CanvasComponentEventHandler) => void;
     emit: (name: string, e: CanvasEvent) => void;

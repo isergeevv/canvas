@@ -84,12 +84,13 @@ export default abstract class CanvasComponent {
   set height(value: number) {
     this._size.height = value;
   }
-  set parent(value: CanvasComponent | CanvasApp) {
-    this._parent = value;
-  }
   set zIndex(value: number) {
     this._zIndex = value;
   }
+
+  setParent = (value: CanvasComponent | CanvasApp) => {
+    this._parent = value;
+  };
 
   once = (name: string, handler: CanvasComponentEventHandler) => {
     this._events.once(name, handler);
@@ -107,7 +108,7 @@ export default abstract class CanvasComponent {
   addChild = (...components: CanvasComponent[]) => {
     for (const component of components) {
       this._children.push(component);
-      component.parent = this;
+      component.setParent(this);
     }
   };
   removeChild = (component: CanvasComponent) => {

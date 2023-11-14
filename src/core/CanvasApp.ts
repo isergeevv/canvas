@@ -187,7 +187,7 @@ export default class CanvasApp {
   addChild = (...components: CanvasComponent[]) => {
     for (const component of components) {
       this._sceneController.currentScene.addComponent(component);
-      component.parent = this;
+      component.setParent(this);
     }
   };
   removeChild = (component: CanvasComponent) => {

@@ -53,7 +53,7 @@ export default class CanvasSceneController {
 
   addScene = (app: CanvasApp, sceneName: string, scene: CanvasScene) => {
     for (const component of scene.components) {
-      component.parent = app;
+      component.setParent(app);
     }
     this._scenes[sceneName] = scene;
   };

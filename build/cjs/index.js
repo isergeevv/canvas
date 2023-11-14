@@ -128,7 +128,7 @@ class CanvasSceneController {
     };
     addScene = (app, sceneName, scene) => {
         for (const component of scene.components) {
-            component.parent = app;
+            component.setParent(app);
         }
         this._scenes[sceneName] = scene;
     };
@@ -367,7 +367,7 @@ class CanvasApp {
     addChild = (...components) => {
         for (const component of components) {
             this._sceneController.currentScene.addComponent(component);
-            component.parent = this;
+            component.setParent(this);
         }
     };
     removeChild = (component) => {
@@ -487,12 +487,12 @@ class CanvasComponent {
     set height(value) {
         this._size.height = value;
     }
-    set parent(value) {
-        this._parent = value;
-    }
     set zIndex(value) {
         this._zIndex = value;
     }
+    setParent = (value) => {
+        this._parent = value;
+    };
     once = (name, handler) => {
         this._events.once(name, handler);
     };
@@ -508,7 +508,7 @@ class CanvasComponent {
     addChild = (...components) => {
         for (const component of components) {
             this._children.push(component);
-            component.parent = this;
+            component.setParent(this);
         }
     };
     removeChild = (component) => {
