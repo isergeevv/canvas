@@ -130,13 +130,11 @@ declare class CanvasApp {
     get width(): number;
     get height(): number;
     get lastPointerPos(): Position;
-    get data(): any;
     get fps(): number;
     get maxFps(): number;
     get children(): CanvasComponent[];
     set width(value: number);
     set height(value: number);
-    set data(value: any);
     setContext: (ctx: CanvasRenderingContext2D) => void;
     init: (startScene?: string) => void;
     setScene: (value: string) => void;
@@ -144,8 +142,11 @@ declare class CanvasApp {
     on: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler<T>) => void;
     emit: <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => void;
     removeListener: <T extends keyof CanvasAppEvents>(name: string, handler: CanvasAppEventHandler<T>) => void;
-    getState: (name: string) => any;
-    setState: (name: string, value: any) => void;
+    getData: <T>(name: string) => T;
+    setData: <T>(name: string, value: T) => void;
+    resetData: () => void;
+    getState: <T>(name: string) => T;
+    setState: <T>(name: string, value: any) => void;
     resetState: () => void;
     attachEvents: () => void;
     detachEvents: () => void;

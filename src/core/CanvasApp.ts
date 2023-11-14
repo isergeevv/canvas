@@ -19,7 +19,7 @@ export default class CanvasApp {
   private _resizeController: CanvasResizeController;
   private _fill: boolean;
   private _lastPointerPos: Position;
-  private _data: any;
+  private _data: Map<string, any>;
   private _state: Map<string, any>;
   private _events: EventEmitter;
   private _windowResizeDebounce: NodeJS.Timeout;
@@ -76,9 +76,6 @@ export default class CanvasApp {
   get lastPointerPos() {
     return this._lastPointerPos;
   }
-  get data() {
-    return this._data;
-  }
   get fps() {
     return this._frameController.currentFps;
   }
@@ -94,9 +91,6 @@ export default class CanvasApp {
   }
   set height(value: number) {
     this._ctx.canvas.height = value;
-  }
-  set data(value: any) {
-    this._data = value;
   }
 
   setContext = (ctx: CanvasRenderingContext2D) => {
@@ -145,10 +139,20 @@ export default class CanvasApp {
     this._events.removeListener(name, handler);
   };
 
-  getState = (name: string) => {
-    return this._state.get(name) ?? null;
+  getData = <T>(name: string) => {
+    return (this._data.get(name) as T) ?? null;
   };
-  setState = (name: string, value: any) => {
+  setData = <T>(name: string, value: T) => {
+    this._data.set(name, value);
+  };
+  resetData = () => {
+    this._data.clear();
+  };
+
+  getState = <T>(name: string) => {
+    return (this._state.get(name) as T) ?? null;
+  };
+  setState = <T>(name: string, value: any) => {
     this._state.set(name, value);
   };
   resetState = () => {

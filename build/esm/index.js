@@ -276,9 +276,6 @@ class CanvasApp {
     get lastPointerPos() {
         return this._lastPointerPos;
     }
-    get data() {
-        return this._data;
-    }
     get fps() {
         return this._frameController.currentFps;
     }
@@ -293,9 +290,6 @@ class CanvasApp {
     }
     set height(value) {
         this._ctx.canvas.height = value;
-    }
-    set data(value) {
-        this._data = value;
     }
     setContext = (ctx) => {
         this._ctx = ctx;
@@ -331,6 +325,15 @@ class CanvasApp {
     };
     removeListener = (name, handler) => {
         this._events.removeListener(name, handler);
+    };
+    getData = (name) => {
+        return this._data.get(name) ?? null;
+    };
+    setData = (name, value) => {
+        this._data.set(name, value);
+    };
+    resetData = () => {
+        this._data.clear();
     };
     getState = (name) => {
         return this._state.get(name) ?? null;
