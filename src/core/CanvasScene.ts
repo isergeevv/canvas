@@ -24,9 +24,14 @@ export default class CanvasScene {
 
   addComponent = (component: CanvasComponent) => {
     this._components.push(component);
+    this.sortZIndex();
   };
 
   removeComponent = (component: CanvasComponent) => {
     this._components = this._components.filter((c) => c !== component);
+  };
+
+  sortZIndex = () => {
+    this._components = this._components.sort((a, b) => a.zIndex - b.zIndex);
   };
 }

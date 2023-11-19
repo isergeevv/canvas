@@ -42,18 +42,14 @@ declare abstract class CanvasComponent {
     private _to;
     private _zIndex;
     private _id;
-    private _children;
-    private _parent;
     private _events;
     private _assets;
     constructor(id?: string);
-    get children(): CanvasComponent[];
     get id(): string;
     get x(): number;
     get y(): number;
     get width(): number;
     get height(): number;
-    get parent(): CanvasApp | CanvasComponent;
     get to(): To;
     get assets(): Record<string, Asset>;
     get isMoving(): boolean;
@@ -62,15 +58,11 @@ declare abstract class CanvasComponent {
     set y(value: number);
     set width(value: number);
     set height(value: number);
-    set zIndex(value: number);
-    setParent: (value: CanvasComponent | CanvasApp) => void;
+    setZIndex(app: CanvasApp, value: number): void;
     once: (name: string, handler: CanvasComponentEventHandler) => void;
     on: (name: string, handler: CanvasComponentEventHandler) => void;
     emit: (name: string, e: CanvasEvent) => void;
     removeListener: (name: string, handler: CanvasComponentEventHandler) => void;
-    addChild: (...components: CanvasComponent[]) => void;
-    removeChild: (component: CanvasComponent) => void;
-    remove: () => void;
     moveTo: (app: CanvasApp, pos: Partial<Position>, ms: number, cb?: CanvasComponentEventHandler) => Promise<unknown>;
     abstract draw(ctx: CanvasRenderingContext2D): void;
     init?: (app: CanvasApp) => void;
@@ -88,6 +80,7 @@ declare class CanvasScene {
     getComponent: (id: string) => CanvasComponent;
     addComponent: (component: CanvasComponent) => void;
     removeComponent: (component: CanvasComponent) => void;
+    sortZIndex: () => void;
 }
 
 declare class CanvasElementEventsController {
@@ -107,11 +100,9 @@ declare class CanvasElementEventsController {
 declare class CanvasApp {
     private _ctx;
     private _sceneController;
-    private _drawController;
     private _elementEventsController;
     private _frameController;
     private _assetsController;
-    private _resizeController;
     private _fill;
     private _lastPointerPos;
     private _data;
@@ -132,9 +123,9 @@ declare class CanvasApp {
     get lastPointerPos(): Position;
     get fps(): number;
     get maxFps(): number;
-    get children(): CanvasComponent[];
     set width(value: number);
     set height(value: number);
+    sortZIndex: () => void;
     setContext: (ctx: CanvasRenderingContext2D) => void;
     init: (startScene?: string) => void;
     setScene: (value: string) => void;
@@ -152,8 +143,6 @@ declare class CanvasApp {
     detachEvents: () => void;
     drawFrame: (timestamp: number) => void;
     addScene: (sceneName: string, scene: CanvasScene) => void;
-    addChild: (...components: CanvasComponent[]) => void;
-    removeChild: (component: CanvasComponent) => void;
     private onPointerMove;
     private onWindowResize;
 }
@@ -161,16 +150,21 @@ declare class CanvasApp {
 declare class CanvasSceneController {
     private _scenes;
     private _currentSceneName;
+    private _sortZIndex;
     constructor();
     get currentSceneName(): string;
     get currentScene(): CanvasScene;
     get scenes(): Record<string, CanvasScene>;
-    destroySceneComponents: (app: CanvasApp, components: CanvasComponent[]) => void;
+    sortZIndex: () => void;
+    destroySceneComponents: (app: CanvasApp) => void;
     init: (startScene?: string) => void;
-    initSceneComponents: (app: CanvasApp, components: CanvasComponent[]) => void;
+    initSceneComponents: (app: CanvasApp) => void;
     setScene: (newSceneName: string) => void;
-    addScene: (app: CanvasApp, sceneName: string, scene: CanvasScene) => void;
+    addScene: (sceneName: string, scene: CanvasScene) => void;
     removeComponent: (component: CanvasComponent) => void;
+    resizeScene: (app: CanvasApp) => void;
+    drawScene: (app: CanvasApp, timestamp: number) => void;
+    private prepareComponentFrame;
 }
 
 declare class CanvasFrameController {

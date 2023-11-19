@@ -9,15 +9,12 @@ export default abstract class CanvasComponent {
   private _to: To;
   private _zIndex: number;
   private _id: string;
-  private _children: CanvasComponent[];
-  private _parent: CanvasComponent | CanvasApp;
   private _events: EventEmitter;
   private _assets: Record<string, Asset>;
 
   constructor(id = '') {
     this._assets = {};
     this._events = new EventEmitter();
-    this._children = [];
     this._id = id;
     this._pos = {
       x: 0,
@@ -38,9 +35,6 @@ export default abstract class CanvasComponent {
     this._zIndex = 0;
   }
 
-  get children() {
-    return this._children;
-  }
   get id() {
     return this._id;
   }
@@ -55,9 +49,6 @@ export default abstract class CanvasComponent {
   }
   get height() {
     return this._size.height;
-  }
-  get parent() {
-    return this._parent;
   }
   get to() {
     return this._to;
@@ -84,13 +75,11 @@ export default abstract class CanvasComponent {
   set height(value: number) {
     this._size.height = value;
   }
-  set zIndex(value: number) {
-    this._zIndex = value;
-  }
 
-  setParent = (value: CanvasComponent | CanvasApp) => {
-    this._parent = value;
-  };
+  setZIndex(app: CanvasApp, value: number) {
+    this._zIndex = value;
+    app.sortZIndex();
+  }
 
   once = (name: string, handler: CanvasComponentEventHandler) => {
     this._events.once(name, handler);
@@ -103,19 +92,6 @@ export default abstract class CanvasComponent {
   };
   removeListener = (name: string, handler: CanvasComponentEventHandler) => {
     this._events.removeListener(name, handler);
-  };
-
-  addChild = (...components: CanvasComponent[]) => {
-    for (const component of components) {
-      this._children.push(component);
-      component.setParent(this);
-    }
-  };
-  removeChild = (component: CanvasComponent) => {
-    this._children = this._children.filter((child) => child !== component);
-  };
-  remove = () => {
-    this.parent.removeChild(this);
   };
 
   moveTo = async (app: CanvasApp, pos: Partial<Position>, ms: number, cb?: CanvasComponentEventHandler) => {

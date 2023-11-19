@@ -5,18 +5,13 @@ import CanvasElementEventsController from '../controllers/CanvasElementEventsCon
 import CanvasFrameController from '../controllers/CanvasFrameController';
 import CanvasSceneController from '../controllers/CanvasSceneController';
 import CanvasAssetsController from '../controllers/CanvasAssetsController';
-import CanvasDrawController from '../controllers/CanvasDrawController';
-import CanvasComponent from './CanvasComponent';
-import CanvasResizeController from '../controllers/CanvasResizeController';
 
 export default class CanvasApp {
   private _ctx: CanvasRenderingContext2D;
   private _sceneController: CanvasSceneController;
-  private _drawController: CanvasDrawController;
   private _elementEventsController: CanvasElementEventsController;
   private _frameController: CanvasFrameController;
   private _assetsController: CanvasAssetsController;
-  private _resizeController: CanvasResizeController;
   private _fill: boolean;
   private _lastPointerPos: Position;
   private _data: Map<string, any>;
@@ -39,8 +34,6 @@ export default class CanvasApp {
     this._elementEventsController = new CanvasElementEventsController();
     this._frameController = new CanvasFrameController(opt.maxFps);
     this._assetsController = new CanvasAssetsController();
-    this._drawController = new CanvasDrawController();
-    this._resizeController = new CanvasResizeController();
   }
 
   get x() {
@@ -83,9 +76,6 @@ export default class CanvasApp {
   get maxFps() {
     return this._frameController.maxFps;
   }
-  get children() {
-    return this._sceneController.currentScene.components;
-  }
 
   set width(value: number) {
     this._ctx.canvas.width = value;
@@ -94,13 +84,17 @@ export default class CanvasApp {
     this._ctx.canvas.height = value;
   }
 
+  sortZIndex = () => {
+    this._sceneController.sortZIndex();
+  };
+
   setContext = (ctx: CanvasRenderingContext2D) => {
     this._ctx = ctx;
   };
 
   init = (startScene?: string) => {
     this._sceneController.init(startScene);
-    this._sceneController.initSceneComponents(this, this.currentScene.components);
+    this._sceneController.initSceneComponents(this);
 
     this._elementEventsController.on('pointermove', this.onPointerMove);
 
@@ -113,7 +107,7 @@ export default class CanvasApp {
     this._elementEventsController.resetEvents();
 
     const oldSceneName = this._sceneController.currentSceneName;
-    this._sceneController.destroySceneComponents(this, this.currentScene.components);
+    this._sceneController.destroySceneComponents(this);
 
     this._sceneController.setScene(value);
     this._sceneController.currentScene.init(this);
@@ -178,21 +172,11 @@ export default class CanvasApp {
 
     if (!this._frameController.addFrame(timestamp)) return;
 
-    this._drawController.drawScene(this, timestamp);
+    this._sceneController.drawScene(this, timestamp);
   };
 
   addScene = (sceneName: string, scene: CanvasScene) => {
-    this._sceneController.addScene(this, sceneName, scene);
-  };
-
-  addChild = (...components: CanvasComponent[]) => {
-    for (const component of components) {
-      this._sceneController.currentScene.addComponent(component);
-      component.setParent(this);
-    }
-  };
-  removeChild = (component: CanvasComponent) => {
-    this._sceneController.removeComponent(component);
+    this._sceneController.addScene(sceneName, scene);
   };
 
   private onPointerMove = (e: CanvasElementEvent<PointerEvent>) => {
@@ -207,7 +191,7 @@ export default class CanvasApp {
       this.width = window.innerWidth;
       this.height = window.innerHeight;
 
-      this._resizeController.resizeCanvas(this, this._sceneController.currentScene.components);
+      this._sceneController.resizeScene(this);
     };
 
     if (!e) {

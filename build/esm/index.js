@@ -86,8 +86,10 @@ class CanvasFrameController {
 class CanvasSceneController {
     _scenes;
     _currentSceneName;
+    _sortZIndex;
     constructor() {
         this._scenes = {};
+        this._sortZIndex = false;
     }
     get currentSceneName() {
         return this._currentSceneName;
@@ -98,10 +100,12 @@ class CanvasSceneController {
     get scenes() {
         return this._scenes;
     }
-    destroySceneComponents = (app, components) => {
-        for (const component of components) {
+    sortZIndex = () => {
+        this._sortZIndex = true;
+    };
+    destroySceneComponents = (app) => {
+        for (const component of this._scenes[this._currentSceneName].components) {
             component.destroy && component.destroy(app);
-            this.destroySceneComponents(app, component.children);
         }
     };
     init = (startScene) => {
@@ -111,10 +115,9 @@ class CanvasSceneController {
         }
         this._currentSceneName = firstSceneName;
     };
-    initSceneComponents = (app, components) => {
-        for (const component of components) {
+    initSceneComponents = (app) => {
+        for (const component of this._scenes[this._currentSceneName].components) {
             component.init && component.init(app);
-            this.initSceneComponents(app, component.children);
         }
     };
     setScene = (newSceneName) => {
@@ -124,62 +127,31 @@ class CanvasSceneController {
         }
         this._currentSceneName = newSceneName;
     };
-    addScene = (app, sceneName, scene) => {
-        for (const component of scene.components) {
-            component.setParent(app);
-        }
+    addScene = (sceneName, scene) => {
         this._scenes[sceneName] = scene;
     };
     removeComponent = (component) => {
         this._scenes[this._currentSceneName].removeComponent(component);
     };
-}
-
-class CanvasAssetsController {
-    loadAssets = async (sceneController) => {
-        for (const scene of Object.values(sceneController.scenes)) {
-            for (const component of scene.components) {
-                console.log(component.id, component.loadAssets);
-                const assets = component.loadAssets && component.loadAssets();
-                if (!assets)
-                    continue;
-                const images = await Promise.all(Object.keys(assets).map((key) => new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.onerror = () => reject(`[CanvasAssetsController] ${assets[key]} failed to load`);
-                    img.onload = () => resolve(img);
-                    img.src = assets[key];
-                })));
-                console.log(images);
-            }
+    resizeScene = (app) => {
+        for (const component of this._scenes[this._currentSceneName].components) {
+            component.resize && component.resize(app);
         }
     };
-}
-
-class CanvasDrawController {
     drawScene = (app, timestamp) => {
-        const drawList = this.prepareComponents(app, timestamp, app.currentScene.components);
-        const zIndexes = Object.keys(drawList);
-        for (const zIndex of zIndexes) {
-            for (const component of drawList[zIndex]) {
-                component.draw(app.ctx);
-                component.zIndex = 0;
-            }
+        const scene = this._scenes[this._currentSceneName];
+        if (this._sortZIndex) {
+            scene.sortZIndex();
+            this._sortZIndex = false;
+        }
+        for (const component of scene.components) {
+            this.prepareComponentFrame(app, timestamp, component);
+        }
+        for (const component of scene.components) {
+            component.draw(app.ctx);
         }
     };
-    prepareComponents = (app, timestamp, components, drawList = {}) => {
-        for (const component of components) {
-            const zIndex = component.zIndex;
-            if (drawList[zIndex])
-                drawList[zIndex].push(component);
-            else
-                drawList[zIndex] = [component];
-            if (!this.prepareFrame(app, timestamp, component)) {
-                this.prepareComponents(app, timestamp, component.children, drawList);
-            }
-        }
-        return drawList;
-    };
-    prepareFrame = (app, timestamp, c) => {
+    prepareComponentFrame = (app, timestamp, c) => {
         if (c.to.x !== undefined || c.to.y !== undefined) {
             if (c.to.x !== undefined) {
                 let newX = c.x + c.to.step.x;
@@ -205,11 +177,22 @@ class CanvasDrawController {
     };
 }
 
-class CanvasResizeController {
-    resizeCanvas = (app, components) => {
-        for (const component of components) {
-            component.resize && component.resize(app);
-            this.resizeCanvas(app, component.children);
+class CanvasAssetsController {
+    loadAssets = async (sceneController) => {
+        for (const scene of Object.values(sceneController.scenes)) {
+            for (const component of scene.components) {
+                console.log(component.id, component.loadAssets);
+                const assets = component.loadAssets && component.loadAssets();
+                if (!assets)
+                    continue;
+                const images = await Promise.all(Object.keys(assets).map((key) => new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onerror = () => reject(`[CanvasAssetsController] ${assets[key]} failed to load`);
+                    img.onload = () => resolve(img);
+                    img.src = assets[key];
+                })));
+                console.log(images);
+            }
         }
     };
 }
@@ -217,11 +200,9 @@ class CanvasResizeController {
 class CanvasApp {
     _ctx;
     _sceneController;
-    _drawController;
     _elementEventsController;
     _frameController;
     _assetsController;
-    _resizeController;
     _fill;
     _lastPointerPos;
     _data;
@@ -241,8 +222,6 @@ class CanvasApp {
         this._elementEventsController = new CanvasElementEventsController();
         this._frameController = new CanvasFrameController(opt.maxFps);
         this._assetsController = new CanvasAssetsController();
-        this._drawController = new CanvasDrawController();
-        this._resizeController = new CanvasResizeController();
     }
     get x() {
         return 0;
@@ -283,21 +262,21 @@ class CanvasApp {
     get maxFps() {
         return this._frameController.maxFps;
     }
-    get children() {
-        return this._sceneController.currentScene.components;
-    }
     set width(value) {
         this._ctx.canvas.width = value;
     }
     set height(value) {
         this._ctx.canvas.height = value;
     }
+    sortZIndex = () => {
+        this._sceneController.sortZIndex();
+    };
     setContext = (ctx) => {
         this._ctx = ctx;
     };
     init = (startScene) => {
         this._sceneController.init(startScene);
-        this._sceneController.initSceneComponents(this, this.currentScene.components);
+        this._sceneController.initSceneComponents(this);
         this._elementEventsController.on('pointermove', this.onPointerMove);
         window.requestAnimationFrame(this.drawFrame);
         this._assetsController.loadAssets(this._sceneController);
@@ -305,7 +284,7 @@ class CanvasApp {
     setScene = (value) => {
         this._elementEventsController.resetEvents();
         const oldSceneName = this._sceneController.currentSceneName;
-        this._sceneController.destroySceneComponents(this, this.currentScene.components);
+        this._sceneController.destroySceneComponents(this);
         this._sceneController.setScene(value);
         this._sceneController.currentScene.init(this);
         this._elementEventsController.reloadEvents(this);
@@ -358,19 +337,10 @@ class CanvasApp {
         window.requestAnimationFrame(this.drawFrame);
         if (!this._frameController.addFrame(timestamp))
             return;
-        this._drawController.drawScene(this, timestamp);
+        this._sceneController.drawScene(this, timestamp);
     };
     addScene = (sceneName, scene) => {
-        this._sceneController.addScene(this, sceneName, scene);
-    };
-    addChild = (...components) => {
-        for (const component of components) {
-            this._sceneController.currentScene.addComponent(component);
-            component.setParent(this);
-        }
-    };
-    removeChild = (component) => {
-        this._sceneController.removeComponent(component);
+        this._sceneController.addScene(sceneName, scene);
     };
     onPointerMove = (e) => {
         this._lastPointerPos.x = e.event.offsetX;
@@ -382,7 +352,7 @@ class CanvasApp {
         const debounce = () => {
             this.width = window.innerWidth;
             this.height = window.innerHeight;
-            this._resizeController.resizeCanvas(this, this._sceneController.currentScene.components);
+            this._sceneController.resizeScene(this);
         };
         if (!e) {
             debounce();
@@ -414,14 +384,11 @@ class CanvasComponent {
     _to;
     _zIndex;
     _id;
-    _children;
-    _parent;
     _events;
     _assets;
     constructor(id = '') {
         this._assets = {};
         this._events = new EventEmitter();
-        this._children = [];
         this._id = id;
         this._pos = {
             x: 0,
@@ -441,9 +408,6 @@ class CanvasComponent {
         };
         this._zIndex = 0;
     }
-    get children() {
-        return this._children;
-    }
     get id() {
         return this._id;
     }
@@ -458,9 +422,6 @@ class CanvasComponent {
     }
     get height() {
         return this._size.height;
-    }
-    get parent() {
-        return this._parent;
     }
     get to() {
         return this._to;
@@ -486,12 +447,10 @@ class CanvasComponent {
     set height(value) {
         this._size.height = value;
     }
-    set zIndex(value) {
+    setZIndex(app, value) {
         this._zIndex = value;
+        app.sortZIndex();
     }
-    setParent = (value) => {
-        this._parent = value;
-    };
     once = (name, handler) => {
         this._events.once(name, handler);
     };
@@ -503,18 +462,6 @@ class CanvasComponent {
     };
     removeListener = (name, handler) => {
         this._events.removeListener(name, handler);
-    };
-    addChild = (...components) => {
-        for (const component of components) {
-            this._children.push(component);
-            component.setParent(this);
-        }
-    };
-    removeChild = (component) => {
-        this._children = this._children.filter((child) => child !== component);
-    };
-    remove = () => {
-        this.parent.removeChild(this);
     };
     moveTo = async (app, pos, ms, cb) => {
         return new Promise((resolve) => {
@@ -555,9 +502,13 @@ class CanvasScene {
     };
     addComponent = (component) => {
         this._components.push(component);
+        this.sortZIndex();
     };
     removeComponent = (component) => {
         this._components = this._components.filter((c) => c !== component);
+    };
+    sortZIndex = () => {
+        this._components = this._components.sort((a, b) => a.zIndex - b.zIndex);
     };
 }
 
