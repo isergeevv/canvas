@@ -28,25 +28,13 @@ export interface CanvasEvent {
   app: CanvasApp;
 }
 
-export interface CanvasAppSwitchSceneEvent extends CanvasEvent {
-  previous: string;
-  current: string;
-}
-
-export interface CanvasAppEvents {
-  sceneChange: CanvasAppSwitchSceneEvent;
-  endMove: CanvasEvent;
-}
-
-export type CanvasAppEventHandler<T extends keyof CanvasAppEvents> = (e: CanvasAppEvents[T]) => void;
-
 export interface CanvasElementEvent<T> extends CanvasEvent {
   event: T;
 }
 
 export type CanvasElementEventHandler<T> = (e: CanvasElementEvent<T>) => void;
 
-export type CanvasComponentEventHandler = (e: CanvasEvent) => void;
+export type CanvasEventHandler = (e: CanvasEvent) => void;
 
 export type Asset =
   | HTMLCanvasElement

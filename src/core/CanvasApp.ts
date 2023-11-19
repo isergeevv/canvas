@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { CanvasAppEventHandler, CanvasAppEvents, CanvasAppOptions, CanvasElementEvent, Position } from '../types';
+import { CanvasEventHandler, CanvasAppOptions, CanvasElementEvent, CanvasEvent, Position } from '../types';
 import CanvasScene from './CanvasScene';
 import CanvasElementEventsController from '../controllers/CanvasElementEventsController';
 import CanvasFrameController from '../controllers/CanvasFrameController';
@@ -113,24 +113,18 @@ export default class CanvasApp {
     this._sceneController.currentScene.init(this);
 
     this._elementEventsController.reloadEvents(this);
-
-    this.emit('sceneChange', {
-      app: this,
-      previous: oldSceneName,
-      current: this._sceneController.currentSceneName,
-    });
   };
 
-  once = <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler<T>) => {
+  once = (name: string, handler: CanvasEventHandler) => {
     this._events.once(name, handler);
   };
-  on = <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler<T>) => {
+  on = (name: string, handler: CanvasEventHandler) => {
     this._events.on(name, handler);
   };
-  emit = <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => {
+  emit = (name: string, e: CanvasEvent) => {
     this._events.emit(name, e);
   };
-  removeListener = <T extends keyof CanvasAppEvents>(name: string, handler: CanvasAppEventHandler<T>) => {
+  removeListener = (name: string, handler: CanvasEventHandler) => {
     this._events.removeListener(name, handler);
   };
 

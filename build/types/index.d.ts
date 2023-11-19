@@ -20,20 +20,11 @@ type To = Position & {
 interface CanvasEvent {
     app: CanvasApp;
 }
-interface CanvasAppSwitchSceneEvent extends CanvasEvent {
-    previous: string;
-    current: string;
-}
-interface CanvasAppEvents {
-    sceneChange: CanvasAppSwitchSceneEvent;
-    endMove: CanvasEvent;
-}
-type CanvasAppEventHandler<T extends keyof CanvasAppEvents> = (e: CanvasAppEvents[T]) => void;
 interface CanvasElementEvent<T> extends CanvasEvent {
     event: T;
 }
 type CanvasElementEventHandler<T> = (e: CanvasElementEvent<T>) => void;
-type CanvasComponentEventHandler = (e: CanvasEvent) => void;
+type CanvasEventHandler = (e: CanvasEvent) => void;
 type Asset = HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | ImageBitmap | OffscreenCanvas | SVGImageElement;
 
 declare abstract class CanvasComponent {
@@ -59,11 +50,11 @@ declare abstract class CanvasComponent {
     set width(value: number);
     set height(value: number);
     setZIndex(app: CanvasApp, value: number): void;
-    once: (name: string, handler: CanvasComponentEventHandler) => void;
-    on: (name: string, handler: CanvasComponentEventHandler) => void;
+    once: (name: string, handler: CanvasEventHandler) => void;
+    on: (name: string, handler: CanvasEventHandler) => void;
     emit: (name: string, e: CanvasEvent) => void;
-    removeListener: (name: string, handler: CanvasComponentEventHandler) => void;
-    moveTo: (app: CanvasApp, pos: Partial<Position>, ms: number, cb?: CanvasComponentEventHandler) => Promise<unknown>;
+    removeListener: (name: string, handler: CanvasEventHandler) => void;
+    moveTo: (app: CanvasApp, pos: Partial<Position>, ms: number, cb?: CanvasEventHandler) => Promise<unknown>;
     abstract draw(ctx: CanvasRenderingContext2D): void;
     init?: (app: CanvasApp) => void;
     prepare?: (app: CanvasApp, timestamp: number) => boolean | void;
@@ -129,10 +120,10 @@ declare class CanvasApp {
     setContext: (ctx: CanvasRenderingContext2D) => void;
     init: (startScene?: string) => void;
     setScene: (value: string) => void;
-    once: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler<T>) => void;
-    on: <T extends keyof CanvasAppEvents>(name: T, handler: CanvasAppEventHandler<T>) => void;
-    emit: <T extends keyof CanvasAppEvents>(name: T, e: CanvasAppEvents[T]) => void;
-    removeListener: <T extends keyof CanvasAppEvents>(name: string, handler: CanvasAppEventHandler<T>) => void;
+    once: (name: string, handler: CanvasEventHandler) => void;
+    on: (name: string, handler: CanvasEventHandler) => void;
+    emit: (name: string, e: CanvasEvent) => void;
+    removeListener: (name: string, handler: CanvasEventHandler) => void;
     getData: <T>(name: string) => T;
     setData: <T>(name: string, value: T) => void;
     resetData: () => void;
@@ -186,4 +177,4 @@ declare class CanvasAssetsController {
 
 declare const getStep: (cur: number, to: number, maxFps: number, ms: number) => number;
 
-export { Asset, CanvasApp, CanvasAppEventHandler, CanvasAppEvents, CanvasAppOptions, CanvasAppSwitchSceneEvent, CanvasAssetsController, CanvasComponent, CanvasComponentEventHandler, CanvasElementEvent, CanvasElementEventHandler, CanvasElementEventsController, CanvasEvent, CanvasFrameController, CanvasScene, CanvasSceneController, Position, S, Size, To, getStep };
+export { Asset, CanvasApp, CanvasAppOptions, CanvasAssetsController, CanvasComponent, CanvasElementEvent, CanvasElementEventHandler, CanvasElementEventsController, CanvasEvent, CanvasEventHandler, CanvasFrameController, CanvasScene, CanvasSceneController, Position, S, Size, To, getStep };

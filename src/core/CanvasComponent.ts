@@ -1,4 +1,4 @@
-import { Asset, CanvasComponentEventHandler, CanvasEvent, Position, Size, To } from '../types';
+import { Asset, CanvasEventHandler, CanvasEvent, Position, Size, To } from '../types';
 import * as util from '../util';
 import CanvasApp from './CanvasApp';
 import EventEmitter from 'events';
@@ -81,20 +81,20 @@ export default abstract class CanvasComponent {
     app.sortZIndex();
   }
 
-  once = (name: string, handler: CanvasComponentEventHandler) => {
+  once = (name: string, handler: CanvasEventHandler) => {
     this._events.once(name, handler);
   };
-  on = (name: string, handler: CanvasComponentEventHandler) => {
+  on = (name: string, handler: CanvasEventHandler) => {
     this._events.on(name, handler);
   };
   emit = (name: string, e: CanvasEvent) => {
     this._events.emit(name, e);
   };
-  removeListener = (name: string, handler: CanvasComponentEventHandler) => {
+  removeListener = (name: string, handler: CanvasEventHandler) => {
     this._events.removeListener(name, handler);
   };
 
-  moveTo = async (app: CanvasApp, pos: Partial<Position>, ms: number, cb?: CanvasComponentEventHandler) => {
+  moveTo = async (app: CanvasApp, pos: Partial<Position>, ms: number, cb?: CanvasEventHandler) => {
     return new Promise((resolve) => {
       this.to.x = pos.x;
       this.to.y = pos.y;

@@ -283,16 +283,11 @@ class CanvasApp {
     };
     setScene = (value) => {
         this._elementEventsController.resetEvents();
-        const oldSceneName = this._sceneController.currentSceneName;
+        this._sceneController.currentSceneName;
         this._sceneController.destroySceneComponents(this);
         this._sceneController.setScene(value);
         this._sceneController.currentScene.init(this);
         this._elementEventsController.reloadEvents(this);
-        this.emit('sceneChange', {
-            app: this,
-            previous: oldSceneName,
-            current: this._sceneController.currentSceneName,
-        });
     };
     once = (name, handler) => {
         this._events.once(name, handler);
