@@ -31,6 +31,7 @@ declare abstract class CanvasComponent {
     private _pos;
     private _size;
     private _to;
+    private _moveSpeed;
     private _zIndex;
     private _id;
     private _events;
@@ -45,16 +46,19 @@ declare abstract class CanvasComponent {
     get assets(): Record<string, Asset>;
     get isMoving(): boolean;
     get zIndex(): number;
+    get moveSpeed(): number;
     set x(value: number);
     set y(value: number);
     set width(value: number);
     set height(value: number);
+    set moveSpeed(value: number);
     setZIndex(app: CanvasApp, value: number): void;
     once: (name: string, handler: CanvasEventHandler) => void;
     on: (name: string, handler: CanvasEventHandler) => void;
     emit: (name: string, e: CanvasEvent) => void;
     removeListener: (name: string, handler: CanvasEventHandler) => void;
     moveTo: (app: CanvasApp, pos: Partial<Position>, ms: number, cb?: CanvasEventHandler) => Promise<unknown>;
+    removeMove: (app: CanvasApp) => void;
     abstract draw(ctx: CanvasRenderingContext2D): void;
     init?: (app: CanvasApp) => void;
     prepare?: (app: CanvasApp, timestamp: number) => boolean | void;

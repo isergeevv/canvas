@@ -7,6 +7,7 @@ export default abstract class CanvasComponent {
   private _pos: Position;
   private _size: Size;
   private _to: To;
+  private _moveSpeed: number;
   private _zIndex: number;
   private _id: string;
   private _events: EventEmitter;
@@ -33,6 +34,7 @@ export default abstract class CanvasComponent {
       },
     };
     this._zIndex = 0;
+    this._moveSpeed = 1;
   }
 
   get id() {
@@ -62,6 +64,9 @@ export default abstract class CanvasComponent {
   get zIndex() {
     return this._zIndex;
   }
+  get moveSpeed() {
+    return this._moveSpeed;
+  }
 
   set x(value: number) {
     this._pos.x = value;
@@ -74,6 +79,9 @@ export default abstract class CanvasComponent {
   }
   set height(value: number) {
     this._size.height = value;
+  }
+  set moveSpeed(value: number) {
+    this._moveSpeed = value;
   }
 
   setZIndex(app: CanvasApp, value: number) {
@@ -107,6 +115,19 @@ export default abstract class CanvasComponent {
         resolve(true);
       });
     });
+  };
+
+  removeMove = (app: CanvasApp) => {
+    this._to = {
+      x: undefined,
+      y: undefined,
+      step: {
+        x: undefined,
+        y: undefined,
+      },
+    };
+
+    this.emit('endMove', { app });
   };
 
   abstract draw(ctx: CanvasRenderingContext2D): void;

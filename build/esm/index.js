@@ -154,7 +154,7 @@ class CanvasSceneController {
     prepareComponentFrame = (app, timestamp, c) => {
         if (c.to.x !== undefined || c.to.y !== undefined) {
             if (c.to.x !== undefined) {
-                let newX = c.x + c.to.step.x;
+                let newX = c.x + c.to.step.x * c.moveSpeed;
                 if ((c.x <= c.to.x && newX >= c.to.x) || (c.x >= c.to.x && newX <= c.to.x)) {
                     newX = c.to.x;
                     c.to.x = undefined;
@@ -162,7 +162,7 @@ class CanvasSceneController {
                 c.x = newX;
             }
             if (c.to.y !== undefined) {
-                let newY = c.y + c.to.step.y;
+                let newY = c.y + c.to.step.y * c.moveSpeed;
                 if ((c.y <= c.to.y && newY >= c.to.y) || (c.y >= c.to.y && newY <= c.to.y)) {
                     newY = c.to.y;
                     c.to.y = undefined;
@@ -377,6 +377,7 @@ class CanvasComponent {
     _pos;
     _size;
     _to;
+    _moveSpeed;
     _zIndex;
     _id;
     _events;
@@ -402,6 +403,7 @@ class CanvasComponent {
             },
         };
         this._zIndex = 0;
+        this._moveSpeed = 1;
     }
     get id() {
         return this._id;
@@ -430,6 +432,9 @@ class CanvasComponent {
     get zIndex() {
         return this._zIndex;
     }
+    get moveSpeed() {
+        return this._moveSpeed;
+    }
     set x(value) {
         this._pos.x = value;
     }
@@ -441,6 +446,9 @@ class CanvasComponent {
     }
     set height(value) {
         this._size.height = value;
+    }
+    set moveSpeed(value) {
+        this._moveSpeed = value;
     }
     setZIndex(app, value) {
         this._zIndex = value;
@@ -471,6 +479,17 @@ class CanvasComponent {
                 resolve(true);
             });
         });
+    };
+    removeMove = (app) => {
+        this._to = {
+            x: undefined,
+            y: undefined,
+            step: {
+                x: undefined,
+                y: undefined,
+            },
+        };
+        this.emit('endMove', { app });
     };
     init;
     prepare;

@@ -89,7 +89,7 @@ export default class CanvasSceneController {
   private prepareComponentFrame = (app: CanvasApp, timestamp: number, c: CanvasComponent): boolean => {
     if (c.to.x !== undefined || c.to.y !== undefined) {
       if (c.to.x !== undefined) {
-        let newX = c.x + c.to.step.x;
+        let newX = c.x + c.to.step.x * c.moveSpeed;
         if ((c.x <= c.to.x && newX >= c.to.x) || (c.x >= c.to.x && newX <= c.to.x)) {
           newX = c.to.x;
           c.to.x = undefined;
@@ -97,7 +97,7 @@ export default class CanvasSceneController {
         c.x = newX;
       }
       if (c.to.y !== undefined) {
-        let newY = c.y + c.to.step.y;
+        let newY = c.y + c.to.step.y * c.moveSpeed;
         if ((c.y <= c.to.y && newY >= c.to.y) || (c.y >= c.to.y && newY <= c.to.y)) {
           newY = c.to.y;
           c.to.y = undefined;
