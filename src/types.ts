@@ -36,10 +36,19 @@ export type CanvasElementEventHandler<T> = (e: CanvasElementEvent<T>) => void;
 
 export type CanvasEventHandler = (e: CanvasEvent) => void;
 
-export type Asset =
+export type CanvasAsset =
   | HTMLCanvasElement
   | HTMLImageElement
   | HTMLVideoElement
   | ImageBitmap
   | OffscreenCanvas
   | SVGImageElement;
+
+export enum ELEMENT_EVENT_TYPES {
+  POINTER_MOVE = 'pointermove',
+  POINTER_DOWN = 'pointerdown',
+  POINTER_UP = 'pointerup',
+  KEY_DOWN = 'keydown',
+  KEY_UP = 'keyup',
+  WHEEL = 'wheel',
+}

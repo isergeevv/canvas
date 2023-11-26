@@ -1,46 +1,48 @@
 import EventEmitter from 'events';
 import { CanvasApp } from '../core';
-import { CanvasElementEvent, CanvasElementEventHandler } from '../types';
+import { CanvasElementEvent, CanvasElementEventHandler, ELEMENT_EVENT_TYPES } from '../types';
 
 export default class CanvasElementEventsController {
-  private _eventListeners: Record<string, EventListener>;
+  private _eventListeners: Map<ELEMENT_EVENT_TYPES, EventListener>;
   private _eventCallbacks: EventEmitter;
 
   constructor() {
-    this._eventListeners = {};
+    this._eventListeners = new Map();
     this._eventCallbacks = new EventEmitter();
   }
 
-  once = <T>(name: string, handler: CanvasElementEventHandler<T>) => {
+  once = <T>(name: ELEMENT_EVENT_TYPES, handler: CanvasElementEventHandler<T>) => {
     this._eventCallbacks.once(name, handler);
   };
-  on = <T>(name: string, handler: CanvasElementEventHandler<T>) => {
+  on = <T>(name: ELEMENT_EVENT_TYPES, handler: CanvasElementEventHandler<T>) => {
     this._eventCallbacks.on(name, handler);
   };
-  emit = <T>(name: string, e: CanvasElementEvent<T>) => {
+  emit = <T>(name: ELEMENT_EVENT_TYPES, e: CanvasElementEvent<T>) => {
     this._eventCallbacks.emit(name, e);
   };
-  removeListener = <T>(name: string, handler: CanvasElementEventHandler<T>) => {
+  removeListener = <T>(name: ELEMENT_EVENT_TYPES, handler: CanvasElementEventHandler<T>) => {
     this._eventCallbacks.removeListener(name, handler);
   };
 
   attachEvents = (app: CanvasApp) => {
-    for (const event of this._eventCallbacks.eventNames()) {
-      if (typeof event !== 'string') continue;
+    for (const event of this._eventCallbacks.eventNames() as ELEMENT_EVENT_TYPES[]) {
+      if (!Object.values(ELEMENT_EVENT_TYPES).includes(event)) continue;
 
-      this._eventListeners[event] = (e: Event) => {
+      const cb = (e: Event) => {
         this.emit(event, { app, event: e });
       };
 
-      app.canvas.addEventListener(event, this._eventListeners[event]);
+      this._eventListeners.set(event, cb);
+
+      app.canvas.addEventListener(event, cb);
     }
   };
 
   detachEvents = (app: CanvasApp) => {
-    for (const event of Object.keys(this._eventListeners)) {
-      app.canvas.removeEventListener(event, this._eventListeners[event]);
+    for (const event of Object.keys(this._eventListeners) as ELEMENT_EVENT_TYPES[]) {
+      app.canvas.removeEventListener(event, this._eventListeners.get(event));
     }
-    this._eventListeners = {};
+    this._eventListeners = new Map();
     this._eventCallbacks.removeAllListeners();
   };
 

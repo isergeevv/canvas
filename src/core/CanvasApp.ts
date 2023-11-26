@@ -1,5 +1,12 @@
 import EventEmitter from 'events';
-import { CanvasEventHandler, CanvasAppOptions, CanvasElementEvent, CanvasEvent, Position } from '../types';
+import {
+  CanvasEventHandler,
+  CanvasAppOptions,
+  CanvasElementEvent,
+  CanvasEvent,
+  Position,
+  ELEMENT_EVENT_TYPES,
+} from '../types';
 import CanvasScene from './CanvasScene';
 import CanvasElementEventsController from '../controllers/CanvasElementEventsController';
 import CanvasFrameController from '../controllers/CanvasFrameController';
@@ -96,7 +103,7 @@ export default class CanvasApp {
     this._sceneController.init(startScene);
     this._sceneController.initSceneComponents(this);
 
-    this._elementEventsController.on('pointermove', this.onPointerMove);
+    this._elementEventsController.on(ELEMENT_EVENT_TYPES.POINTER_MOVE, this.onPointerMove);
 
     window.requestAnimationFrame(this.drawFrame);
 

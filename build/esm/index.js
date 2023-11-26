@@ -1,10 +1,20 @@
 import EventEmitter from 'events';
 
+var ELEMENT_EVENT_TYPES;
+(function (ELEMENT_EVENT_TYPES) {
+    ELEMENT_EVENT_TYPES["POINTER_MOVE"] = "pointermove";
+    ELEMENT_EVENT_TYPES["POINTER_DOWN"] = "pointerdown";
+    ELEMENT_EVENT_TYPES["POINTER_UP"] = "pointerup";
+    ELEMENT_EVENT_TYPES["KEY_DOWN"] = "keydown";
+    ELEMENT_EVENT_TYPES["KEY_UP"] = "keyup";
+    ELEMENT_EVENT_TYPES["WHEEL"] = "wheel";
+})(ELEMENT_EVENT_TYPES || (ELEMENT_EVENT_TYPES = {}));
+
 class CanvasElementEventsController {
     _eventListeners;
     _eventCallbacks;
     constructor() {
-        this._eventListeners = {};
+        this._eventListeners = new Map();
         this._eventCallbacks = new EventEmitter();
     }
     once = (name, handler) => {
@@ -21,19 +31,20 @@ class CanvasElementEventsController {
     };
     attachEvents = (app) => {
         for (const event of this._eventCallbacks.eventNames()) {
-            if (typeof event !== 'string')
+            if (!Object.values(ELEMENT_EVENT_TYPES).includes(event))
                 continue;
-            this._eventListeners[event] = (e) => {
+            const cb = (e) => {
                 this.emit(event, { app, event: e });
             };
-            app.canvas.addEventListener(event, this._eventListeners[event]);
+            this._eventListeners.set(event, cb);
+            app.canvas.addEventListener(event, cb);
         }
     };
     detachEvents = (app) => {
         for (const event of Object.keys(this._eventListeners)) {
-            app.canvas.removeEventListener(event, this._eventListeners[event]);
+            app.canvas.removeEventListener(event, this._eventListeners.get(event));
         }
-        this._eventListeners = {};
+        this._eventListeners = new Map();
         this._eventCallbacks.removeAllListeners();
     };
     resetEvents = () => {
@@ -277,7 +288,7 @@ class CanvasApp {
     init = (startScene) => {
         this._sceneController.init(startScene);
         this._sceneController.initSceneComponents(this);
-        this._elementEventsController.on('pointermove', this.onPointerMove);
+        this._elementEventsController.on(ELEMENT_EVENT_TYPES.POINTER_MOVE, this.onPointerMove);
         window.requestAnimationFrame(this.drawFrame);
         this._assetsController.loadAssets(this._sceneController);
     };
@@ -372,6 +383,11 @@ const getStep = (cur, to, maxFps, ms) => {
         return positive ? 0.001 : -0.001;
     return step;
 };
+
+var util = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  getStep: getStep
+});
 
 class CanvasComponent {
     _pos;
@@ -526,4 +542,4 @@ class CanvasScene {
     };
 }
 
-export { CanvasApp, CanvasAssetsController, CanvasComponent, CanvasElementEventsController, CanvasFrameController, CanvasScene, CanvasSceneController, getStep };
+export { CanvasApp, CanvasAssetsController, CanvasComponent, CanvasElementEventsController, CanvasFrameController, CanvasScene, CanvasSceneController, ELEMENT_EVENT_TYPES, util };

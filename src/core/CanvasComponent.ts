@@ -1,4 +1,4 @@
-import { Asset, CanvasEventHandler, CanvasEvent, Position, Size, To } from '../types';
+import { CanvasAsset, CanvasEventHandler, CanvasEvent, Position, Size, To } from '../types';
 import * as util from '../util';
 import CanvasApp from './CanvasApp';
 import EventEmitter from 'events';
@@ -11,7 +11,7 @@ export default abstract class CanvasComponent {
   private _zIndex: number;
   private _id: string;
   private _events: EventEmitter;
-  private _assets: Record<string, Asset>;
+  private _assets: Record<string, CanvasAsset>;
 
   constructor(id = '') {
     this._assets = {};

@@ -25,7 +25,15 @@ interface CanvasElementEvent<T> extends CanvasEvent {
 }
 type CanvasElementEventHandler<T> = (e: CanvasElementEvent<T>) => void;
 type CanvasEventHandler = (e: CanvasEvent) => void;
-type Asset = HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | ImageBitmap | OffscreenCanvas | SVGImageElement;
+type CanvasAsset = HTMLCanvasElement | HTMLImageElement | HTMLVideoElement | ImageBitmap | OffscreenCanvas | SVGImageElement;
+declare enum ELEMENT_EVENT_TYPES {
+    POINTER_MOVE = "pointermove",
+    POINTER_DOWN = "pointerdown",
+    POINTER_UP = "pointerup",
+    KEY_DOWN = "keydown",
+    KEY_UP = "keyup",
+    WHEEL = "wheel"
+}
 
 declare abstract class CanvasComponent {
     private _pos;
@@ -43,7 +51,7 @@ declare abstract class CanvasComponent {
     get width(): number;
     get height(): number;
     get to(): To;
-    get assets(): Record<string, Asset>;
+    get assets(): Record<string, CanvasAsset>;
     get isMoving(): boolean;
     get zIndex(): number;
     get moveSpeed(): number;
@@ -82,10 +90,10 @@ declare class CanvasElementEventsController {
     private _eventListeners;
     private _eventCallbacks;
     constructor();
-    once: <T>(name: string, handler: CanvasElementEventHandler<T>) => void;
-    on: <T>(name: string, handler: CanvasElementEventHandler<T>) => void;
-    emit: <T>(name: string, e: CanvasElementEvent<T>) => void;
-    removeListener: <T>(name: string, handler: CanvasElementEventHandler<T>) => void;
+    once: <T>(name: ELEMENT_EVENT_TYPES, handler: CanvasElementEventHandler<T>) => void;
+    on: <T>(name: ELEMENT_EVENT_TYPES, handler: CanvasElementEventHandler<T>) => void;
+    emit: <T>(name: ELEMENT_EVENT_TYPES, e: CanvasElementEvent<T>) => void;
+    removeListener: <T>(name: ELEMENT_EVENT_TYPES, handler: CanvasElementEventHandler<T>) => void;
     attachEvents: (app: CanvasApp) => void;
     detachEvents: (app: CanvasApp) => void;
     resetEvents: () => void;
@@ -181,4 +189,11 @@ declare class CanvasAssetsController {
 
 declare const getStep: (cur: number, to: number, maxFps: number, ms: number) => number;
 
-export { Asset, CanvasApp, CanvasAppOptions, CanvasAssetsController, CanvasComponent, CanvasElementEvent, CanvasElementEventHandler, CanvasElementEventsController, CanvasEvent, CanvasEventHandler, CanvasFrameController, CanvasScene, CanvasSceneController, Position, S, Size, To, getStep };
+declare const util_getStep: typeof getStep;
+declare namespace util {
+  export {
+    util_getStep as getStep,
+  };
+}
+
+export { CanvasApp, CanvasAppOptions, CanvasAsset, CanvasAssetsController, CanvasComponent, CanvasElementEvent, CanvasElementEventHandler, CanvasElementEventsController, CanvasEvent, CanvasEventHandler, CanvasFrameController, CanvasScene, CanvasSceneController, ELEMENT_EVENT_TYPES, Position, S, Size, To, util };
